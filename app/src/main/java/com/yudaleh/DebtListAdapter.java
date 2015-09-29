@@ -29,20 +29,27 @@ import com.parse.ParseQuery;
 import com.parse.ParseQueryAdapter;
 import com.parse.ParseUser;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
+
+import java.util.Set;
+import java.util.stream.*;
 
 /**
  * Adapter between the list and the user's debts.
  */
-class DebtListAdapter extends ParseQueryAdapter<Debt> implements PinnedSectionListAdapter, ExpandableListAdapter {
+class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSectionListAdapter,*/ ExpandableListAdapter {
 
     static final int ACTION_CALL = 0;
     static final int ACTION_SMS = 1;
     static final int ACTION_CHAT = 2;
 
     private final Context mContext;
+    private List<Debt> mDebts;
+    private List<String> mDataHeaders;
+    private HashMap<String, List<Debt>> mDataChildren;
 
     private static final int[] COLORS = new int[] {
             R.color.green_light, R.color.orange_light,
@@ -50,113 +57,54 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements PinnedSectionLi
 
     @Override
     public int getGroupCount() {
-        return 0;
+        return this.mDataHeaders.size();
     }
 
     @Override
     public int getChildrenCount(int groupPosition) {
-        return 0;
+        return this.mDataChildren.get(this.mDataHeaders.get(groupPosition)).size();
     }
 
     @Override
     public Object getGroup(int groupPosition) {
-        return null;
+        return this.mDataHeaders.get(groupPosition);
     }
 
     @Override
     public Object getChild(int groupPosition, int childPosition) {
-        return null;
+        return this.mDataChildren.get(this.mDataHeaders.get(groupPosition)).get(childPosition);
     }
 
     @Override
     public long getGroupId(int groupPosition) {
-        return 0;
+        return groupPosition;
     }
 
     @Override
     public long getChildId(int groupPosition, int childPosition) {
-        return 0;
+        return childPosition;
     }
 
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
-        return null;
+        String headerTitle = (String) getGroup(groupPosition);
+        if (convertView == null) {
+            LayoutInflater infalInflater = (LayoutInflater) mContext
+                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            convertView = infalInflater.inflate(R.layout.list_group, null);
+        }
+
+        TextView lblListHeader = (TextView) convertView
+                .findViewById(R.id.lblListHeader);
+        lblListHeader.setTypeface(null, Typeface.BOLD);
+        lblListHeader.setText(headerTitle);
+
+        return convertView;
     }
 
     @Override
-    public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-        return null;
-    }
-
-    @Override
-    public boolean isChildSelectable(int groupPosition, int childPosition) {
-        return false;
-    }
-
-    @Override
-    public void onGroupExpanded(int groupPosition) {
-
-    }
-
-    @Override
-    public void onGroupCollapsed(int groupPosition) {
-
-    }
-
-    @Override
-    public long getCombinedChildId(long groupId, long childId) {
-        return 0;
-    }
-
-    @Override
-    public long getCombinedGroupId(long groupId) {
-        return 0;
-    }
-
-    private class ViewHolder {
-        TextView debtTitle;
-        public ImageView debtImage;
-        public TextView debtDescription;
-        public Button action1;
-        public Button action2;
-        public Button action3;
-    }
-
-    DebtListAdapter(Context context, QueryFactory<Debt> queryFactory) {
-        super(context, queryFactory);
-        mContext = context;
-        generateDataset('A', 'Z', false);// REMOVE: 29/09/2015
-    }
-
-    public void generateDataset(char from, char to, boolean clear) {
-//
-//        if (clear) clear();
-//
-//        final int sectionsNumber = to - from + 1;
-//
-//        int sectionPosition = 0, listPosition = 0;
-//        for (char i=0; i<sectionsNumber; i++) {
-//            Item section = new Item(Item.SECTION, String.valueOf((char)('A' + i)));
-//            section.sectionPosition = sectionPosition;
-//            section.listPosition = listPosition++;
-//            onSectionAdded(section, sectionPosition);
-//            add(section);
-//
-//            final int itemsNumber = (int) Math.abs((Math.cos(2f*Math.PI/3f * sectionsNumber / (i+1f)) * 25f));
-//            for (int j=0;j<itemsNumber;j++) {
-//                Item item = new Item(Item.ITEM, section.text.toUpperCase(Locale.ENGLISH) + " - " + j);
-//                item.sectionPosition = sectionPosition;
-//                item.listPosition = listPosition++;
-//                add(item);
-//            }
-//
-//            sectionPosition++;
-//        }
-    }
-
-
-    @Override
-    public View getItemView(final Debt debt, View view, ViewGroup parent) {
+    public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View view, ViewGroup parent) {
+        final Debt debt = (Debt) getChild(groupPosition, childPosition);
         ViewHolder holder;
         if (view == null) {
             view = LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
@@ -282,6 +230,198 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements PinnedSectionLi
         return view;
     }
 
+    @Override
+    public boolean isChildSelectable(int groupPosition, int childPosition) {
+        return true;
+    }
+
+    @Override
+    public void onGroupExpanded(int groupPosition) {
+
+    }
+
+    @Override
+    public void onGroupCollapsed(int groupPosition) {
+
+    }
+
+    @Override
+    public long getCombinedChildId(long groupId, long childId) {
+        return 0;
+    }
+
+    @Override
+    public long getCombinedGroupId(long groupId) {
+        return 0;
+    }
+
+    private class ViewHolder {
+        TextView debtTitle;
+        public ImageView debtImage;
+        public TextView debtDescription;
+        public Button action1;
+        public Button action2;
+        public Button action3;
+    }
+
+    DebtListAdapter(Context context, QueryFactory<Debt> queryFactory) {
+        super(context, queryFactory);
+        mContext = context;
+        addOnQueryLoadListener(new OnQueryLoadListener<Debt>() {
+            @Override
+            public void onLoading() {
+
+            }
+
+            @Override
+            public void onLoaded(List<Debt> debts, Exception e) {
+                if (e == null) {
+                    mDebts = debts;
+                    mDataChildren = new HashMap<>();
+                    for (Debt debt : debts) {
+                        String phone = debt.getPhone();
+                        if(!mDataChildren.containsKey(phone)){
+                            List<Debt> list= new ArrayList<>();
+                            list.add(debt);
+                            mDataChildren.put(phone,list);
+                        }
+                        else {
+                            mDataChildren.get(phone).add(debt);
+                        }
+                    }
+                    mDataHeaders = new ArrayList<>(mDataChildren.keySet());// TODO: 9/29/2015 sort
+                }
+            }
+        });
+    }
+
+    /*@Override
+    public View getItemView(final Debt debt, View view, ViewGroup parent) {
+        ViewHolder holder;
+        if (view == null) {
+            view = LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
+            holder = new ViewHolder();
+            holder.debtImage = (ImageView) view.findViewById(R.id.example_row_iv_image);
+            holder.debtTitle = (TextView) view
+                    .findViewById(R.id.debt_title);
+            holder.debtDescription = (TextView) view.findViewById(R.id.example_row_tv_description);
+            holder.action1 = (Button) view.findViewById(R.id.action_edit);
+            holder.action2 = (Button) view.findViewById(R.id.action_message);
+            holder.action3 = (Button) view.findViewById(R.id.action_call);
+            view.setTag(holder);
+        } else {
+            holder = (ViewHolder) view.getTag();
+        }
+        TextView debtTitle = holder.debtTitle;
+        TextView debtDescription = holder.debtDescription;
+        ImageView debtImage = holder.debtImage;
+
+        if (debt.getCurrencyPos() != Debt.NON_MONEY_DEBT_CURRENCY) {
+            debtImage.setImageResource(R.drawable.dollar);
+        } else {
+            debtImage.setImageResource(R.drawable.box_closed_icon);// TODO: 25/09/2015 image / location
+        }
+
+        // Action 1:
+        holder.action1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openEditView(debt);
+            }
+        });
+
+        // Action 2:
+        if (debt.getPhone() != null) {
+            holder.action2.setText(R.string.action2_text_with_phone);
+            holder.action2.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showActionsDialog(debt);
+                }
+            });
+        } else {
+            holder.action2.setText(R.string.action2_text_no_phone);
+            holder.action2.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // TODO: 9/26/2015
+                }
+            });
+        }
+//        holder.action3.setText(mContext.getString(R.string.action3_text, debt.getDueDate()));
+        holder.action3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SlideDateTimeListener listener = new SlideDateTimeListener() {
+
+                    @SuppressWarnings("deprecation")
+                    @Override
+                    public void onDateTimeSet(Date date) {
+                        date.setSeconds(0);
+                        debt.setDueDate(date);
+                    }
+
+                    @Override
+                    public void onDateTimeCancel() {
+
+                    }
+                };
+                Date initDate;
+                Date currDate = debt.getDueDate();
+                if (currDate != null) {
+                    initDate = currDate;
+                } else {
+                    initDate = new Date();
+                }
+                new SlideDateTimePicker.Builder(((AppCompatActivity) mContext).getSupportFragmentManager())
+                        .setListener(listener)
+                        .setInitialDate(initDate)
+                        .setIndicatorColor(Color.RED)
+                        .build()
+                        .show();
+            }
+        });
+
+        // TODO: 05/09/2015 remove info
+*//*
+        ParseUser author = debt.getAuthor();
+        if(author!=null) {
+            String token = author.getSessionToken();
+            boolean isAuth = author.isAuthenticated();
+            boolean isDataAvai = author.isDataAvailable();
+            boolean isNew = author.isNew();
+            boolean isDirty = author.isDirty();
+            boolean isLinked = ParseAnonymousUtils.isLinked(author);
+        }
+//            String info = "\nauthor: "+author.getUsername()+"\nisAuth: "+isAuth+"\nisDataAvai: "+isDataAvai+"\nisNew: "+isNew+"\nisDirty: "+isDirty+"\ntoken: "+token+"\nisLinked: "+isLinked;
+*//*
+
+//String extra = "\n"+debt.getUuidString()+"<-"+debt.getOtherUuid(); // REMOVE: 24/09/2015
+        debtTitle.setText(debt.getTitle());
+        if (debt.isDraft()) {
+            debtTitle.setTypeface(null, Typeface.ITALIC);
+            debtTitle.setTextColor(Color.RED);// TODO: 02/09/2015 GRAY
+
+        } else {
+            debtTitle.setTypeface(null, Typeface.NORMAL);
+            if (debt.getStatus() == Debt.STATUS_CREATED) {
+                debtTitle.setTextColor(Color.BLACK);
+            } else if (debt.getStatus() == Debt.STATUS_PENDING) {
+                debtTitle.setTextColor(Color.GREEN);
+            } else if (debt.getStatus() == Debt.STATUS_CONFIRMED) {
+                debtTitle.setTextColor(Color.BLUE);
+            } else if (debt.getStatus() == Debt.STATUS_RETURNED) {
+                debtTitle.setTextColor(Color.MAGENTA);
+            } else {
+                debtTitle.setTextColor(Color.YELLOW);
+            }
+
+        }
+
+        debtDescription.setText(debt.getOwner());
+        return view;
+    }*/
+
 
     /**
      * Show a confirmation push notification dialog, with an option to call the owner.
@@ -319,15 +459,15 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements PinnedSectionLi
 //    @Override public int getViewTypeCount() {
 //        return 2;
 //    }
-
-    @Override public int getItemViewType(int position) {
-        return getItem(position).getStatus();// TODO: 29/09/2015
-    }
-
-    @Override
-    public boolean isItemViewTypePinned(int viewType) {
-        return false;
-    }
+//
+//    @Override public int getItemViewType(int position) {
+//        return getItem(position).getStatus();// TODO: 29/09/2015
+//    }
+//
+//    @Override
+//    public boolean isItemViewTypePinned(int viewType) {
+//        return false;
+//    }
 
     public void openConversationByPhone(Debt debt) {
         ParseQuery<ParseUser> query = ParseUser.getQuery();

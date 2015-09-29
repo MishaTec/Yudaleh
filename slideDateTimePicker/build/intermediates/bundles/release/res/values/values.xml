@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- From: file:/C:/Users/Michael/AndroidStudioProjects/Yudaleh/slideDateTimePicker/src/main/res/values/colors.xml -->
+    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/src/main/res/values/colors.xml -->
     <eat-comment/>
     <item name="gray_holo_dark" type="color">#ff464646</item>
     <item name="gray_holo_light" type="color">#ffd0d0d0</item>
-    <!-- From: file:/C:/Users/Michael/AndroidStudioProjects/Yudaleh/slideDateTimePicker/src/main/res/values/styles.xml -->
+    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/src/main/res/values/styles.xml -->
     <eat-comment/>
     <style name="AppBaseTheme" parent="android:Theme.Light">
         <!--
