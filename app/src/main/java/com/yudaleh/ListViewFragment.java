@@ -34,7 +34,7 @@ public class ListViewFragment extends android.support.v4.app.Fragment {
     ParseQueryAdapter<Debt> debtListAdapter;
 
     // For showing empty and non-empty debt views
-//    private ListView debtListView; remo
+//    private ListView debtListView; // REMOVE: 29/09/2015
     private LinearLayout noDebtsView;
 
     private View mRoot;

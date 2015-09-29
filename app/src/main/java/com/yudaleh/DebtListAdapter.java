@@ -1,6 +1,7 @@
 package com.yudaleh;
 
 import android.app.AlertDialog;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,13 +15,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ExpandableListAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.jjobes.slidedatetimepicker.SlideDateTimeListener;
 import com.github.jjobes.slidedatetimepicker.SlideDateTimePicker;
-import com.hb.views.PinnedSectionListView;
+import com.hb.views.PinnedSectionListView.PinnedSectionListAdapter;
 import com.parse.FindCallback;
 import com.parse.ParseAnonymousUtils;
 import com.parse.ParseQuery;
@@ -29,17 +31,87 @@ import com.parse.ParseUser;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Adapter between the list and the user's debts.
  */
-class DebtListAdapter extends ParseQueryAdapter<Debt> implements PinnedSectionListView.PinnedSectionListAdapter {
+class DebtListAdapter extends ParseQueryAdapter<Debt> implements PinnedSectionListAdapter, ExpandableListAdapter {
 
     static final int ACTION_CALL = 0;
     static final int ACTION_SMS = 1;
     static final int ACTION_CHAT = 2;
 
+    private final Context mContext;
 
+    private static final int[] COLORS = new int[] {
+            R.color.green_light, R.color.orange_light,
+            R.color.blue_light, R.color.red_light };
+
+    @Override
+    public int getGroupCount() {
+        return 0;
+    }
+
+    @Override
+    public int getChildrenCount(int groupPosition) {
+        return 0;
+    }
+
+    @Override
+    public Object getGroup(int groupPosition) {
+        return null;
+    }
+
+    @Override
+    public Object getChild(int groupPosition, int childPosition) {
+        return null;
+    }
+
+    @Override
+    public long getGroupId(int groupPosition) {
+        return 0;
+    }
+
+    @Override
+    public long getChildId(int groupPosition, int childPosition) {
+        return 0;
+    }
+
+    @Override
+    public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
+        return null;
+    }
+
+    @Override
+    public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+        return null;
+    }
+
+    @Override
+    public boolean isChildSelectable(int groupPosition, int childPosition) {
+        return false;
+    }
+
+    @Override
+    public void onGroupExpanded(int groupPosition) {
+
+    }
+
+    @Override
+    public void onGroupCollapsed(int groupPosition) {
+
+    }
+
+    @Override
+    public long getCombinedChildId(long groupId, long childId) {
+        return 0;
+    }
+
+    @Override
+    public long getCombinedGroupId(long groupId) {
+        return 0;
+    }
 
     private class ViewHolder {
         TextView debtTitle;
@@ -50,64 +122,38 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements PinnedSectionLi
         public Button action3;
     }
 
-    public static class CustomMenuAdapter extends ArrayAdapter<CharSequence> {// REMOVE: 27/09/2015
-
-        boolean disableOptionA = true;
-
-        private CustomMenuAdapter(Context context, int textViewResId, CharSequence[] strings, boolean disableOptionA) {
-            super(context, textViewResId, strings);
-            this.disableOptionA = disableOptionA;
-        }
-
-        public static CustomMenuAdapter createFromResource(Context context, int textArrayResId, int textViewResId,
-                                                           boolean disableOptionA) {
-
-            Resources resources = context.getResources();
-            CharSequence[] strings = resources.getTextArray(textArrayResId);
-
-            return new CustomMenuAdapter(context, textViewResId, strings, disableOptionA);
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View view = super.getView(position, convertView, parent);
-            switch (position) {
-                case ACTION_CHAT:
-                    view.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-//                            openConversationByPhone(new Debt());
-                            int x = 7;
-                        }
-                    });
-                    break;
-            }
-            view.setEnabled(isEnabled(position));
-            return view;
-        }
-
-        @Override
-        public boolean areAllItemsEnabled() {
-            return false;
-        }
-
-        @Override
-        public boolean isEnabled(int position) {
-            if (position == 0) {
-                if (disableOptionA) {
-                    return false;
-                }
-            }
-            return true;
-        }
-    }
-
-    private final Context mContext;
-
     DebtListAdapter(Context context, QueryFactory<Debt> queryFactory) {
         super(context, queryFactory);
         mContext = context;
+        generateDataset('A', 'Z', false);// REMOVE: 29/09/2015
     }
+
+    public void generateDataset(char from, char to, boolean clear) {
+//
+//        if (clear) clear();
+//
+//        final int sectionsNumber = to - from + 1;
+//
+//        int sectionPosition = 0, listPosition = 0;
+//        for (char i=0; i<sectionsNumber; i++) {
+//            Item section = new Item(Item.SECTION, String.valueOf((char)('A' + i)));
+//            section.sectionPosition = sectionPosition;
+//            section.listPosition = listPosition++;
+//            onSectionAdded(section, sectionPosition);
+//            add(section);
+//
+//            final int itemsNumber = (int) Math.abs((Math.cos(2f*Math.PI/3f * sectionsNumber / (i+1f)) * 25f));
+//            for (int j=0;j<itemsNumber;j++) {
+//                Item item = new Item(Item.ITEM, section.text.toUpperCase(Locale.ENGLISH) + " - " + j);
+//                item.sectionPosition = sectionPosition;
+//                item.listPosition = listPosition++;
+//                add(item);
+//            }
+//
+//            sectionPosition++;
+//        }
+    }
+
 
     @Override
     public View getItemView(final Debt debt, View view, ViewGroup parent) {
@@ -270,6 +316,14 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements PinnedSectionLi
                 .show();
     }
 
+//    @Override public int getViewTypeCount() {
+//        return 2;
+//    }
+
+    @Override public int getItemViewType(int position) {
+        return getItem(position).getStatus();// TODO: 29/09/2015
+    }
+
     @Override
     public boolean isItemViewTypePinned(int viewType) {
         return false;
@@ -299,6 +353,28 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements PinnedSectionLi
         i.putExtra(Debt.KEY_UUID, debt.getUuidString());
         i.putExtra(Debt.KEY_TAB_TAG, debt.getTabTag());
         mContext.startActivity(i);
+    }
+
+    static class Item {
+
+        public static final int ITEM = 0;
+        public static final int SECTION = 1;
+
+        public final int type;
+        public final String text;
+
+        public int sectionPosition;
+        public int listPosition;
+
+        public Item(int type, String text) {
+            this.type = type;
+            this.text = text;
+        }
+
+        @Override public String toString() {
+            return text;
+        }
+
     }
 
 }
