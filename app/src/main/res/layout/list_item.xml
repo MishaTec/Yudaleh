@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+    <LinearLayout
+        android:id="@+id/back"
+        style="@style/ListBackContent"
+        android:tag="back">
+
+        <Button
+            android:id="@+id/action_edit"
+            style="@style/ListButtonAction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/action1_text" />
+
+        <Button
+            android:id="@+id/action_message"
+            style="@style/ListButtonAction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/action2_text_no_phone" />
+
+        <Button
+            android:id="@+id/action_call"
+            style="@style/ListButtonAction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/action3_text" />
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/front"
+        style="@style/ListFrontContent"
+        android:orientation="vertical"
+        android:tag="front">
+
+        <ImageView
+            android:id="@+id/example_row_iv_image"
+            style="@style/ListImage"
+            android:contentDescription="@string/debt_icon_desc" />
+
+        <TextView
+            android:id="@+id/debt_title"
+            style="@style/ListTitle"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/example_row_iv_image"
+            android:layout_toEndOf="@id/example_row_iv_image" />
+
+        <TextView
+            android:id="@+id/example_row_tv_description"
+            style="@style/ListDescription"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/debt_title"
+            android:layout_toRightOf="@id/example_row_iv_image"
+            android:layout_toEndOf="@id/example_row_iv_image" />
+
+    </RelativeLayout>
+
+</FrameLayout>
