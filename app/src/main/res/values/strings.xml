@@ -126,7 +126,7 @@
     <string name="cancel">Cancel</string>
     <string name="skip">Skip</string>
     <string name="delete">Delete</string>
-    <string name="delete_confirm_message">Delete the debt?</string>
+    <string name="delete_confirm_message">Delete debt?</string>
     <string name="save_changes_confirm">Save changes?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -168,7 +168,7 @@
     <string name="discard">Discard</string>
     <string name="action1_text">Open</string>
     <string name="action2_text_with_phone">Contact owner</string>
-    <string name="action2_text_no_phone">(Add phone)</string>
+    <string name="action2_text_no_phone">(no phone)</string>
     <string name="action3_text">Reminder</string>
 
     <string name="rightOffset">Right Offset (%1$s dp)</string>

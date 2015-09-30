@@ -78,17 +78,18 @@ public class EditDebtActivity extends AppCompatActivity {
     private EditText debtDescText;
     private MenuItem searchViewMenuItem;
     private SearchView searchView;
+    private AutoCompleteTextView searchAutoComplete;
     private ImageView closeBtn;
-    private Spinner spinner1;
 
+    private Spinner spinner1;
     private Debt debt;
     private String debtId;
     private String debtTabTag;
     private boolean isFromPush;
     private boolean isNew;
     private boolean isModified;
-    private Debt beforeChange;
 
+    private Debt beforeChange;
     private int currencyPos;
     private MenuItem deleteMenuItem;
 
@@ -140,17 +141,19 @@ public class EditDebtActivity extends AppCompatActivity {
 
                     }
                 };
+                Date now = new Date();
+                Date prevDate = debt.getDueDate();
                 Date initDate;
-                Date currDate = debt.getDueDate();
-                if (currDate != null) {
-                    initDate = currDate;
+                if (prevDate != null && now.before(prevDate)) {
+                    // future scheduled date already exists
+                    initDate = prevDate;
                 } else {
-                    initDate = new Date();
+                    initDate = now;
                 }
                 new SlideDateTimePicker.Builder(getSupportFragmentManager())
                         .setListener(listener)
                         .setInitialDate(initDate)
-                        .setIndicatorColor(Color.RED)
+                        .setIndicatorColor(R.color.accent)
                         .build()
                         .show();
             }
@@ -177,11 +180,31 @@ public class EditDebtActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                setResult(RESULT_CANCELED);
-                finish();
-                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                intent.putExtra(Debt.KEY_TAB_TAG, debtTabTag);
-                startActivity(intent);
+                setDebtFieldsAfterEditing();
+                if (isModified || isNew) {
+                    (new AlertDialog.Builder(this))
+                            .setMessage(R.string.save_changes_confirm)
+                            .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (!validateDebtDetails()) {
+                                        return;
+                                    }
+                                    saveDebt(FLAG_SET_ALARM | FLAG_FORCE_BACK_TO_MAIN);
+                                    // TODO: 9/30/2015 send update push
+                                }
+                            })
+                            .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    revertChangesAndCancel();
+                                }
+                            })
+                            .show();
+                    return true;
+                } else {
+                    cancelActivity();
+                }
                 break;
             case R.id.action_delete:// TODO: 24/09/2015 confirm dialog
                 (new AlertDialog.Builder(EditDebtActivity.this))
@@ -197,12 +220,7 @@ public class EditDebtActivity extends AppCompatActivity {
                                 finish();
                             }
                         })
-                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-
-                            }
-                        })
+                        .setNegativeButton(R.string.cancel, null)
                         .show();
 
                 break;
@@ -213,7 +231,7 @@ public class EditDebtActivity extends AppCompatActivity {
                 setDebtFieldsAfterEditing();
                 if (debt.getPhone() != null && (isNew || isModified)) {
                     if (pushCheckBox.isChecked()) {// TODO: 24/09/2015 settings
-                        sendPushToOwner();
+                        sendPushToOwner();// TODO: 9/30/2015  auto receive push if modified (update existing)
                     }
                     showActionsDialog();
                 } else {
@@ -226,28 +244,54 @@ public class EditDebtActivity extends AppCompatActivity {
         return false;
     }
 
+    /**
+     * Undo all changes and cancel the activity.
+     */
+    private void revertChangesAndCancel() {
+        if(!isNew) {
+            debt.copyFrom(beforeChange); // TODO: 9/30/2015 check if needed
+        }
+        cancelActivity();
+    }
+
+    /**
+     * Returns back home with cancel result.
+     */
+    private void cancelActivity() {
+        setResult(RESULT_CANCELED);
+        finish();
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        intent.putExtra(Debt.KEY_TAB_TAG, debtTabTag);
+        startActivity(intent);
+    }
+
     @Override
     public void onBackPressed() {
         setDebtFieldsAfterEditing();
-        (new AlertDialog.Builder(this))
-                .setMessage(R.string.save_changes_confirm)
-                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (!validateDebtDetails()) {
-                            return;
+        if (isModified || isNew) {
+            (new AlertDialog.Builder(this))
+                    .setMessage(R.string.save_changes_confirm)
+                    .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (!validateDebtDetails()) {
+                                return;
+                            }
+                            saveDebt(FLAG_SET_ALARM | FLAG_FORCE_BACK_TO_MAIN);
+                            // TODO: 9/30/2015 send update push
+                            EditDebtActivity.super.onBackPressed();
                         }
-                        saveDebt(FLAG_SET_ALARM | FLAG_FORCE_BACK_TO_MAIN);
-                        EditDebtActivity.super.onBackPressed();
-                    }
-                })
-                .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                    }
-                })
-                .show();
+                    })
+                    .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            revertChangesAndCancel();
+                        }
+                    })
+                    .show();
+        } else {
+            cancelActivity();
+        }
     }
 
     /**
@@ -265,7 +309,7 @@ public class EditDebtActivity extends AppCompatActivity {
      * @param flags FLAG_SET_ALARM for setting the alarm if needed, and FLAG_FORCE_BACK_TO_MAIN for calling {@link MainActivity}.
      */
     private void wrapUp(int flags) {
-        if ((flags & FLAG_SET_ALARM) != 0 && debt.getDueDate() != null) {
+        if ((flags & FLAG_SET_ALARM) != 0) {
             setAlarm(debt);
         }
         setResult(Activity.RESULT_OK);
@@ -333,7 +377,6 @@ public class EditDebtActivity extends AppCompatActivity {
         if (!remindCheckBox.isChecked()) {
             // In case the date was already set by the dialog
             debt.setDueDate(null);
-            cancelAlarm(debt);
         }
         debt.setDraft(true);
         debt.setStatus(Debt.STATUS_CREATED);
@@ -380,7 +423,7 @@ public class EditDebtActivity extends AppCompatActivity {
         }
         if (debtOwnerText.getText().toString().trim().equals("")) {
             debtOwnerText.setError(getString(R.string.no_owner_error));
-            requestViewFocus(debtTitleText);
+            requestViewFocus(debtOwnerText);
             return false;
         }
         return true;
@@ -626,7 +669,7 @@ public class EditDebtActivity extends AppCompatActivity {
     /**
      * Next button listener that focuses on next empty <code>TextView</code>.
      */
-    private TextView.OnEditorActionListener onEditorActionListener = new EditText.OnEditorActionListener() {
+    private TextView.OnEditorActionListener focusNextEmptyListener = new EditText.OnEditorActionListener() {
         @Override
         public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
             if (actionId == EditorInfo.IME_ACTION_NEXT) {
@@ -651,11 +694,11 @@ public class EditDebtActivity extends AppCompatActivity {
      */
     private void initViewHolders() {
         debtTitleText = (EditText) findViewById(R.id.debt_title);
-        debtTitleText.setOnEditorActionListener(onEditorActionListener);
+        debtTitleText.setOnEditorActionListener(focusNextEmptyListener);
         debtOwnerText = (EditText) findViewById(R.id.debt_owner);
-        debtOwnerText.setOnEditorActionListener(onEditorActionListener);
+        debtOwnerText.setOnEditorActionListener(focusNextEmptyListener);
         debtPhoneText = (EditText) findViewById(R.id.debt_phone);
-        debtPhoneText.setOnEditorActionListener(onEditorActionListener);
+        debtPhoneText.setOnEditorActionListener(focusNextEmptyListener);
         debtDescText = (EditText) findViewById(R.id.debt_desc);
         remindButton = (Button) findViewById(R.id.remind_button);
         remindCheckBox = (CheckBox) findViewById(R.id.remind_checkbox);
@@ -784,13 +827,13 @@ public class EditDebtActivity extends AppCompatActivity {
         LinearLayout linearLayout1 = (LinearLayout) searchView.getChildAt(0);
         LinearLayout linearLayout2 = (LinearLayout) linearLayout1.getChildAt(2);
         LinearLayout linearLayout3 = (LinearLayout) linearLayout2.getChildAt(1);
-        AutoCompleteTextView autoComplete = (AutoCompleteTextView) linearLayout3.getChildAt(0);
+        searchAutoComplete = (AutoCompleteTextView) linearLayout3.getChildAt(0);
         //Set the input text color
-        autoComplete.setTextColor(Color.WHITE);
+        searchAutoComplete.setTextColor(Color.WHITE);
         // set the hint text color
-        autoComplete.setHintTextColor(Color.WHITE);
-        autoComplete.setNextFocusDownId(R.id.debt_title);
-        autoComplete.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+        searchAutoComplete.setHintTextColor(Color.WHITE);
+        searchAutoComplete.setNextFocusDownId(R.id.debt_title);
+        searchAutoComplete.setOnEditorActionListener(new EditText.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_NEXT) {
@@ -868,12 +911,10 @@ public class EditDebtActivity extends AppCompatActivity {
             debtOwnerText.setText(displayName);
             String phone = getPhoneNumber(displayName);
             debtPhoneText.setText(phone);
-            closeSearchView();
-            focusOnNextEmptyOrDone(debtTitleText);
+            searchAutoComplete.onEditorAction(EditorInfo.IME_ACTION_NEXT);
         } else if (Intent.ACTION_SEARCH.equals(intent.getAction())) { // REMOVE: 14/09/2015
             // Other query
-            closeSearchView();
-            focusOnNextEmptyOrDone(debtTitleText);
+            searchAutoComplete.onEditorAction(EditorInfo.IME_ACTION_NEXT);
         }
     }
 
@@ -926,11 +967,17 @@ public class EditDebtActivity extends AppCompatActivity {
 
     /**
      * Sets a new notification alarm.
+     * In case the due date is null the alarm is canceled.
      *
      * @param debt with valid dueDate.
      */
     private void setAlarm(Debt debt) {
-        long timeInMillis = debt.getDueDate().getTime();
+        Date dueDate = debt.getDueDate();
+        if (dueDate == null) {
+            cancelAlarm(debt);
+            return;
+        }
+        long timeInMillis = dueDate.getTime();
         Intent alertIntent = new Intent(this, DueDateAlarm.class);
         String schemeSpecificPart = debt.getUuidString();
         int alarmId = schemeSpecificPart.hashCode();
