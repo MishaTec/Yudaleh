@@ -184,20 +184,27 @@ public class EditDebtActivity extends AppCompatActivity {
                 startActivity(intent);
                 break;
             case R.id.action_delete:// TODO: 24/09/2015 confirm dialog
-                sendPushResponse(debt.getOtherUuid(), Debt.STATUS_RETURNED);// TODO: 16/09/2015 move to "done" marking
-                cancelAlarm(debt);
-                // The debt will be deleted eventually but will immediately be excluded from mQuery results.
-                debt.deleteEventually();// FIXME: 17/09/2015
-/*                debt.deleteInBackground(new DeleteCallback() {
-                    @Override
-                    public void done(ParseException e) {
-                        if (e != null) {
-                            System.err.println("Not deleted: " + e.getMessage());
-                        }
-                    }
-                });*/// FIXME: 17/09/2015
-                setResult(Activity.RESULT_OK);
-                finish();
+                (new AlertDialog.Builder(EditDebtActivity.this))
+                        .setMessage(R.string.delete_confirm_message)
+                        .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                sendPushResponse(debt.getOtherUuid(), Debt.STATUS_RETURNED);// TODO: 16/09/2015 move to "done" marking
+                                cancelAlarm(debt);
+                                // The debt will be deleted eventually but will immediately be excluded from mQuery results.
+                                debt.deleteEventually();
+                                setResult(Activity.RESULT_OK);
+                                finish();
+                            }
+                        })
+                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                            }
+                        })
+                        .show();
+
                 break;
             case R.id.action_done:
                 if (!validateDebtDetails()) {
@@ -217,6 +224,30 @@ public class EditDebtActivity extends AppCompatActivity {
                 break;
         }
         return false;
+    }
+
+    @Override
+    public void onBackPressed() {
+        setDebtFieldsAfterEditing();
+        (new AlertDialog.Builder(this))
+                .setMessage(R.string.save_changes_confirm)
+                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (!validateDebtDetails()) {
+                            return;
+                        }
+                        saveDebt(FLAG_SET_ALARM | FLAG_FORCE_BACK_TO_MAIN);
+                        EditDebtActivity.super.onBackPressed();
+                    }
+                })
+                .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                })
+                .show();
     }
 
     /**
@@ -313,7 +344,7 @@ public class EditDebtActivity extends AppCompatActivity {
         if (debt.equals(beforeChange)) {
             isModified = false;
         } else {
-            isModified = true;// TODO: 19/09/2015
+            isModified = true;// TODO: 19/09/2015 exclude last checkboxes
         }
     }
 
@@ -503,6 +534,12 @@ public class EditDebtActivity extends AppCompatActivity {
 
                         }
                         saveDebt(FLAG_SET_ALARM);
+                    }
+                })
+                .setNegativeButton(R.string.skip, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
                     }
                 })
                 .setOnCancelListener(new DialogInterface.OnCancelListener() {

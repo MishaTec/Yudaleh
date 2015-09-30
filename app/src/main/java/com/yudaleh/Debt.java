@@ -9,8 +9,10 @@ import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.UUID;
 
 @ParseClassName("Debt")
@@ -264,6 +266,25 @@ public class Debt extends ParseObject {
             clone.put(key, get(key));
         }
         return clone;
+    }
+
+    void copyFrom(Debt other){
+        Set<String> otherKeys = other.keySet();
+
+        for (Iterator it = otherKeys.iterator(); it.hasNext(); ) {
+            Object keyObj = it.next();
+            String key = keyObj.toString();
+            put(key, other.get(key));
+        }
+
+        // Make sure there are no extra keys
+        for (Iterator it = keySet().iterator(); it.hasNext(); ) {
+            Object keyObj = it.next();
+            String key = keyObj.toString();
+            if (!otherKeys.contains(key)) {
+                remove(key);
+            }
+        }
     }
 
 }

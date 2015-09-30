@@ -16,10 +16,13 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ExpandableListAdapter;
+import android.widget.ExpandableListView;
 import android.widget.ImageView;
+import android.widget.ListAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.fortysevendeg.swipelistview.SwipeListView;
 import com.github.jjobes.slidedatetimepicker.SlideDateTimeListener;
 import com.github.jjobes.slidedatetimepicker.SlideDateTimePicker;
 import com.hb.views.PinnedSectionListView.PinnedSectionListAdapter;
@@ -34,8 +37,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import java.util.Set;
-import java.util.stream.*;
 
 /**
  * Adapter between the list and the user's debts.
@@ -54,6 +55,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
     private static final int[] COLORS = new int[] {
             R.color.green_light, R.color.orange_light,
             R.color.blue_light, R.color.red_light };
+    private DebtSwipeListAdapter mSwipeAdapter;
 
     @Override
     public int getGroupCount() {
@@ -62,7 +64,8 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
 
     @Override
     public int getChildrenCount(int groupPosition) {
-        return this.mDataChildren.get(this.mDataHeaders.get(groupPosition)).size();
+        return 1;
+//        return this.mDataChildren.get(this.mDataHeaders.get(groupPosition)).size();// FIXME: 30/09/2015
     }
 
     @Override
@@ -104,10 +107,84 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
 
     @Override
     public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View view, ViewGroup parent) {
+        if(!isLastChild){
+            return null;
+//            debtTitle.setVisibility(View.GONE);
+//            view.setVisibility(View.GONE);
+        }
+
+        ViewHolder holder;
+        if (view == null) {
+            view = LayoutInflater.from(mContext).inflate(R.layout.list_child, parent, false);
+            holder = new ViewHolder();
+            holder.childList = (SwipeListView) view.findViewById(R.id.child_list);
+            view.setTag(holder);
+            holder.childList.setAdapter(mSwipeAdapter);
+        } else {
+            holder = (ViewHolder) view.getTag();
+        }
+
+//        List<Debt> children = mDataChildren.get(mDataHeaders.get(groupPosition));
+//        ArrayList<View> views = new ArrayList<>();
+//        for (Debt child : children) {
+//            View childView;
+//            LayoutInflater infalInflater = (LayoutInflater) mContext
+//                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+//            childView = infalInflater.inflate(R.layout.list_child, null);
+//            TextView title = (TextView) childView.findViewById(R.id.debt_title);
+//            title.setText(child.getTitle());
+//            views.add(childView);
+//        }
+
+//        childList.addChildrenForAccessibility(views);
+
+//        final Debt debt = (Debt) getChild(groupPosition, childPosition);
+//
+//
+//
+//        TextView debtTitle = holder.debtTitle;
+//
+//        debtTitle.setText(debt.getTitle());
+//        if (debt.isDraft()) {
+//            debtTitle.setTypeface(null, Typeface.ITALIC);
+//            debtTitle.setTextColor(Color.RED);// TODO: 02/09/2015 GRAY
+//
+//        } else {
+//            debtTitle.setTypeface(null, Typeface.NORMAL);
+//            if (debt.getStatus() == Debt.STATUS_CREATED) {
+//                debtTitle.setTextColor(Color.BLACK);
+//            } else if (debt.getStatus() == Debt.STATUS_PENDING) {
+//                debtTitle.setTextColor(Color.GREEN);
+//            } else if (debt.getStatus() == Debt.STATUS_CONFIRMED) {
+//                debtTitle.setTextColor(Color.BLUE);
+//            } else if (debt.getStatus() == Debt.STATUS_RETURNED) {
+//                debtTitle.setTextColor(Color.MAGENTA);
+//            } else {
+//                debtTitle.setTextColor(Color.YELLOW);
+//            }
+//
+//        }
+
+//        else{
+//            debtTitle.setVisibility(View.VISIBLE);
+//            view.setVisibility(View.VISIBLE);
+//        }
+        return view;
+    }
+
+    /*@Override
+    public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View view, ViewGroup parent) {
+        if(!isLastChild){
+            return null;
+        }
+        else{
+            return LayoutInflater.from(mContext).inflate(R.layout.list_child, parent, false);
+        }
         final Debt debt = (Debt) getChild(groupPosition, childPosition);
         ViewHolder holder;
         if (view == null) {
-            view = LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
+            view = LayoutInflater.from(mContext).inflate(R.layout.list_child, parent, false);
+//            view = LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
             holder = new ViewHolder();
             holder.debtImage = (ImageView) view.findViewById(R.id.example_row_iv_image);
             holder.debtTitle = (TextView) view
@@ -191,7 +268,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         });
 
         // TODO: 05/09/2015 remove info
-/*
+*//*
         ParseUser author = debt.getAuthor();
         if(author!=null) {
             String token = author.getSessionToken();
@@ -202,7 +279,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
             boolean isLinked = ParseAnonymousUtils.isLinked(author);
         }
 //            String info = "\nauthor: "+author.getUsername()+"\nisAuth: "+isAuth+"\nisDataAvai: "+isDataAvai+"\nisNew: "+isNew+"\nisDirty: "+isDirty+"\ntoken: "+token+"\nisLinked: "+isLinked;
-*/
+*//*
 
 //String extra = "\n"+debt.getUuidString()+"<-"+debt.getOtherUuid(); // REMOVE: 24/09/2015
         debtTitle.setText(debt.getTitle());
@@ -228,7 +305,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
 
         debtDescription.setText(debt.getOwner());
         return view;
-    }
+    }*/
 
     @Override
     public boolean isChildSelectable(int groupPosition, int childPosition) {
@@ -256,17 +333,25 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
     }
 
     private class ViewHolder {
-        TextView debtTitle;
-        public ImageView debtImage;
-        public TextView debtDescription;
-        public Button action1;
-        public Button action2;
-        public Button action3;
+//        TextView debtTitle;
+//        ImageView debtImage;
+//        TextView debtDescription;
+//        Button action1;
+//        Button action2;
+//        Button action3;
+
+        SwipeListView childList;
+
     }
 
     DebtListAdapter(Context context, QueryFactory<Debt> queryFactory) {
         super(context, queryFactory);
+        mSwipeAdapter= new DebtSwipeListAdapter(context,queryFactory);
         mContext = context;
+        // Init data to prevent <code>NullPointerException</code>
+        mDebts = new ArrayList<>();
+        mDataHeaders = new ArrayList<>();
+        mDataChildren = new HashMap<>();
         addOnQueryLoadListener(new OnQueryLoadListener<Debt>() {
             @Override
             public void onLoading() {
@@ -281,9 +366,13 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
                     for (Debt debt : debts) {
                         String phone = debt.getPhone();
                         if(!mDataChildren.containsKey(phone)){
-                            List<Debt> list= new ArrayList<>();
-                            list.add(debt);
-                            mDataChildren.put(phone,list);
+                            List<Debt> debtItems= new ArrayList<>();
+                            debtItems.add(debt);
+                            mDataChildren.put(phone,debtItems);
+//                            ArrayList<View> debtViews= new ArrayList<>();// REMOVE: 30/09/2015
+//                            View debtView =
+//                            debtViews.add(debt);
+//                            mDataChildrenViews.put(phone,debtViews);
                         }
                         else {
                             mDataChildren.get(phone).add(debt);

@@ -76,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Intent serviceIntent;
     private boolean isSyncOptionVisible = true;
+    private Toast backtoast;
 
 
 //    ListViewFragment iOweViewFragmentWithTag;// REMOVE: 29/09/2015
@@ -129,8 +130,7 @@ public class MainActivity extends AppCompatActivity {
             syncDebtsToParse(!SHOW_LOGIN_ON_ERROR);// TODO: 19/09/2015 make sure it's called after on result from login, so no accidental debts are uploaded
             // Update the title
             updateLoggedInInfo();
-        }
-        else {
+        } else {
             // In case the user is logged out, the sync option works as login
             setSyncOptionVisibility(true);
         }
@@ -152,6 +152,16 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    public void onBackPressed() {
+        if (backtoast != null && backtoast.getView().getWindowToken() != null) {
+            super.onBackPressed();
+            finish();
+        } else {
+            backtoast = Toast.makeText(this, " Press Back again to Exit ", Toast.LENGTH_SHORT);
+            backtoast.show();
+        }
+
+    }
 /*    @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -444,7 +454,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void subscribeToPush() {
         List<String> subscribedChannels = ParseInstallation.getCurrentInstallation().getList("channels");
-        String phone  = ParseUser.getCurrentUser().getString("phone");
+        String phone = ParseUser.getCurrentUser().getString("phone");
         if (phone == null) {
             return;
         }
@@ -456,7 +466,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void unsubscribeFromPush() {
         List<String> subscribedChannels = ParseInstallation.getCurrentInstallation().getList("channels");
-        String phone  = ParseUser.getCurrentUser().getString("phone");
+        String phone = ParseUser.getCurrentUser().getString("phone");
         if (phone == null) {
             return;
         }
