@@ -153,7 +153,7 @@ public class EditDebtActivity extends AppCompatActivity {
                 new SlideDateTimePicker.Builder(getSupportFragmentManager())
                         .setListener(listener)
                         .setInitialDate(initDate)
-                        .setIndicatorColor(R.color.accent)
+                        .setIndicatorColor(getResources().getColor(R.color.accent))
                         .build()
                         .show();
             }

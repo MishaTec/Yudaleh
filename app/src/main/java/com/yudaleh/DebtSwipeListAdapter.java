@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
+import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -126,12 +127,14 @@ class DebtSwipeListAdapter extends ParseQueryAdapter<Debt> {
 
                     }
                 };
+                Date now = new Date();
+                Date prevDate = debt.getDueDate();
                 Date initDate;
-                Date currDate = debt.getDueDate();
-                if (currDate != null) {
-                    initDate = currDate;
+                if (prevDate != null && now.before(prevDate)) {
+                    // future scheduled date already exists
+                    initDate = prevDate;
                 } else {
-                    initDate = new Date();
+                    initDate = now;
                 }
                 new SlideDateTimePicker.Builder(((AppCompatActivity) mContext).getSupportFragmentManager())
                         .setListener(listener)
