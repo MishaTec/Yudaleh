@@ -25,15 +25,10 @@ public class ListViewFragment extends android.support.v4.app.Fragment {
 
     // Adapter for the Debts Parse Query
     DebtListAdapter debtListAdapter;
-
-    // For showing empty and non-empty debt views
-//    private ListView debtListView; // REMOVE: 29/09/2015
     private LinearLayout noDebtsView;
-
-    private View mRoot;
-
-    ParseQueryAdapter.QueryFactory<Debt> factory;
     private ExpandableListView listView;
+    private View mRoot;
+    ParseQueryAdapter.QueryFactory<Debt> factory;
 
     public ListViewFragment() {
         // Set up the Parse mQuery to use in the adapter
@@ -56,7 +51,6 @@ public class ListViewFragment extends android.support.v4.app.Fragment {
 
         View root = inflater.inflate(R.layout.fragment_listview, container, false);
         // Set up the views
-//        debtListView = (ListView) root.findViewById(android.R.id.list);// REMOVE: 24/09/2015
 //        listView = (SwipeListView) root.findViewById(R.id.debts_list);// TODO: 30/09/2015 merge
         listView = (ExpandableListView) root.findViewById(R.id.debts_list);
         noDebtsView = (LinearLayout) root.findViewById(R.id.no_debts_view);
@@ -65,96 +59,6 @@ public class ListViewFragment extends android.support.v4.app.Fragment {
         // Set up the adapter
         debtListAdapter = new DebtListAdapter(getActivity(), factory);
 
-
-//        listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);// UNCOMMENT: 30/09/2015
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-//            listView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
-//
-//                @Override
-//                public void onItemCheckedStateChanged(ActionMode mode, int position,
-//                                                      long id, boolean checked) {
-//                    mode.setTitle("Selected (" + listView.getCountSelected() + ")");
-//                }
-//
-//                @Override
-//                public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-//                    switch (item.getItemId()) {
-//                        case R.id.action_delete:
-//                            listView.dismissSelected();
-//                            mode.finish();
-//                            return true;
-//                        default:
-//                            return false;
-//                    }
-//                }
-//
-//                @Override
-//                public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-//                    MenuInflater inflater = mode.getMenuInflater();
-//                    inflater.inflate(R.menu.menu_choice_items, menu);
-//                    return true;
-//                }
-//
-//                @Override
-//                public void onDestroyActionMode(ActionMode mode) {
-//                    listView.unselectedChoiceStates();
-//                }
-//
-//                @Override
-//                public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-//                    return false;
-//                }
-//            });
-//        }
-
-//        listView.setSwipeListViewListener(new BaseSwipeListViewListener() {// UNCOMMENT: 30/09/2015
-//            @Override
-//            public void onOpened(int position, boolean toRight) {
-//            }
-//
-//            @Override
-//            public void onClosed(int position, boolean fromRight) {
-//            }
-//
-//            @Override
-//            public void onListChanged() {
-//            }
-//
-//            @Override
-//            public void onMove(int position, float x) {
-//            }
-//
-//            @Override
-//            public void onStartOpen(int position, int action, boolean right) {
-//                Log.d("swipe", String.format("onStartOpen %d - action %d", position, action));
-//            }
-//
-//            @Override
-//            public void onStartClose(int position, boolean right) {
-//                Log.d("swipe", String.format("onStartClose %d", position));
-//            }
-//
-//            @Override
-//            public void onClickFrontView(int position) {
-//                Debt debt = debtListAdapter.getItem(position);
-//                openEditView(debt);
-//            }
-//
-//            @Override
-//            public void onClickBackView(int position) {
-//                Log.d("swipe", String.format("onClickBackView %d", position));
-//            }
-//
-//            @Override
-//            public void onDismiss(int[] reverseSortedPositions) {
-///*                for (int position : reverseSortedPositions) {
-//                    data.remove(position);
-//                }
-//                adapter.notifyDataSetChanged();*/
-//                int x = 5;
-//            }
-//
-//        });
         // Attach the mQuery adapter to the view
         listView.setAdapter((ExpandableListAdapter) debtListAdapter);
 
@@ -193,26 +97,8 @@ public class ListViewFragment extends android.support.v4.app.Fragment {
 
     @Override
     public void onResume() {
-        super.onResume();
         updateView();
-        reloadSettings();
-    }
-
-    private void reloadSettings() {
-        SettingsManager settings = SettingsManager.getInstance();
-//        listView.setSwipeMode(settings.getSwipeMode());// UNCOMMENT: 30/09/2015
-//        listView.setSwipeActionLeft(settings.getSwipeActionLeft());
-//        listView.setSwipeActionRight(settings.getSwipeActionRight());
-//        listView.setOffsetLeft(convertDpToPixel(settings.getSwipeOffsetLeft()));
-//        listView.setOffsetRight(convertDpToPixel(settings.getSwipeOffsetRight()));
-//        listView.setAnimationTime(settings.getSwipeAnimationTime());
-//        listView.setSwipeOpenOnLongPress(settings.isSwipeOpenOnLongPress());
-    }
-
-    public int convertDpToPixel(float dp) {
-        DisplayMetrics metrics = getResources().getDisplayMetrics();
-        float px = dp * (metrics.densityDpi / 160f);
-        return (int) px;
+        super.onResume();
     }
 
     // Helper methods: -----------------------------------------------------------------------------
@@ -224,8 +110,7 @@ public class ListViewFragment extends android.support.v4.app.Fragment {
     }
 
     private void updateView() {
-        debtListAdapter.loadObjects();// REMOVE: 07/09/2015 ?
-        debtListAdapter.notifyDataSetChanged();
+        debtListAdapter.update();
     }
 
     void clearView() {

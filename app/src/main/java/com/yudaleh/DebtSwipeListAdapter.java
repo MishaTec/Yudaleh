@@ -27,17 +27,29 @@ import com.parse.ParseQuery;
 import com.parse.ParseQueryAdapter;
 import com.parse.ParseUser;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 /**
  * Adapter between the {@link com.fortysevendeg.swipelistview.SwipeListView} and the user's debts.
  */
-class DebtSwipeListAdapter extends ParseQueryAdapter<Debt> {
+class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
+
+    private final Context mContext;
+    private final List<Debt> mDebts;
+    private final int mResource;
 
     static final int ACTION_CALL = 0;
     static final int ACTION_SMS = 1;
     static final int ACTION_CHAT = 2;
+
+    public DebtSwipeListAdapter(Context context, int resource, List<Debt> debts) {
+        super(context, resource, debts);
+        this.mDebts = debts;
+        this.mContext = context;
+        this.mResource = resource;
+    }
 
     private class ViewHolder {
         TextView debtTitle;
@@ -48,23 +60,18 @@ class DebtSwipeListAdapter extends ParseQueryAdapter<Debt> {
         public Button action3;
     }
 
-    private final Context mContext;
-
-    DebtSwipeListAdapter(Context context, QueryFactory<Debt> queryFactory) {
-        super(context, queryFactory);
-        mContext = context;
-    }
 
     @Override
-    public View getItemView(final Debt debt, View view, ViewGroup parent) {
+    public View getView(int position, View view, ViewGroup parent) {
+        final Debt debt = mDebts.get(position);
         ViewHolder holder;
         if (view == null) {
-            view = LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
+            view = LayoutInflater.from(mContext).inflate(mResource, parent, false);
             holder = new ViewHolder();
-            holder.debtImage = (ImageView) view.findViewById(R.id.example_row_iv_image);
+            holder.debtImage = (ImageView) view.findViewById(R.id.example_row_iv_image);// TODO: 03/10/2015 rename
             holder.debtTitle = (TextView) view
                     .findViewById(R.id.debt_title);
-            holder.debtDescription = (TextView) view.findViewById(R.id.example_row_tv_description);
+            holder.debtDescription = (TextView) view.findViewById(R.id.example_row_tv_description);// TODO: 03/10/2015 rename
             holder.action1 = (Button) view.findViewById(R.id.action_edit);
             holder.action2 = (Button) view.findViewById(R.id.action_message);
             holder.action3 = (Button) view.findViewById(R.id.action_call);
@@ -104,7 +111,7 @@ class DebtSwipeListAdapter extends ParseQueryAdapter<Debt> {
             holder.action2.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // TODO: 9/26/2015
+                    // TODO: 9/26/2015 set phone
                 }
             });
         }
@@ -139,7 +146,6 @@ class DebtSwipeListAdapter extends ParseQueryAdapter<Debt> {
                 new SlideDateTimePicker.Builder(((AppCompatActivity) mContext).getSupportFragmentManager())
                         .setListener(listener)
                         .setInitialDate(initDate)
-                        .setIndicatorColor(Color.RED)
                         .build()
                         .show();
             }
@@ -184,7 +190,6 @@ class DebtSwipeListAdapter extends ParseQueryAdapter<Debt> {
         debtDescription.setText(debt.getOwner());
         return view;
     }
-
 
     /**
      * Show a confirmation push notification dialog, with an option to call the owner.

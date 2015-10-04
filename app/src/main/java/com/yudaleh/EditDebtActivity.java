@@ -222,7 +222,6 @@ public class EditDebtActivity extends AppCompatActivity {
                         })
                         .setNegativeButton(R.string.cancel, null)
                         .show();
-
                 break;
             case R.id.action_done:
                 if (!validateDebtDetails()) {
@@ -248,7 +247,7 @@ public class EditDebtActivity extends AppCompatActivity {
      * Undo all changes and cancel the activity.
      */
     private void revertChangesAndCancel() {
-        if(!isNew) {
+        if (!isNew) {
             debt.copyFrom(beforeChange); // TODO: 9/30/2015 check if needed
         }
         cancelActivity();
@@ -402,7 +401,7 @@ public class EditDebtActivity extends AppCompatActivity {
             return;
         }
         String currency = spinner1.getItemAtPosition(currencyPos).toString();
-        int amount = debt.getMoneyAmount();
+        float amount = debt.getMoneyAmount();
         if (amount >= 0) {
             debt.setTitle(amount + " " + currency);
         } else {
@@ -558,9 +557,13 @@ public class EditDebtActivity extends AppCompatActivity {
         } else {
             array = R.array.contact_actions_array_logged_out;
         }
+        String[] strArray = getResources().getStringArray(array);
+        for (int i = 0; i < strArray.length; i++) {
+            strArray[i] += " " + debt.getOwner();
+        }
         (new AlertDialog.Builder(EditDebtActivity.this))
                 .setTitle(title)
-                .setItems(array, new DialogInterface.OnClickListener() {
+                .setItems(strArray, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         switch (whichButton) {
                             case DebtListAdapter.ACTION_CHAT:
@@ -582,7 +585,7 @@ public class EditDebtActivity extends AppCompatActivity {
                 .setNegativeButton(R.string.skip, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-
+                        saveDebt(FLAG_SET_ALARM | FLAG_FORCE_BACK_TO_MAIN);
                     }
                 })
                 .setOnCancelListener(new DialogInterface.OnCancelListener() {

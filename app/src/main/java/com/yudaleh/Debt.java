@@ -76,24 +76,23 @@ public class Debt extends ParseObject {
         put(KEY_CURRENCY_POS, currencyPos);
     }
 
-    int getMoneyAmount() {
+    float getMoneyAmount() {
         return getInt(KEY_MONEY_AMOUNT);
     }
 
-    void setMoneyAmount(int moneyAmount) {
+    void setMoneyAmount(float moneyAmount) {
         put(KEY_MONEY_AMOUNT, moneyAmount);
     }
 
     public void setMoneyAmountByTitle() {
         String title = getTitle();
         if (title == null) {
-            setMoneyAmount(-1);
+            setMoneyAmount(0);
         } else {
-            title = title.replaceAll("[^0-9]+", "");
             if (title.length() > 0) {
-                setMoneyAmount(Integer.parseInt(title));
+                setMoneyAmount(Float.valueOf(title.replaceAll("[^\\d.]+|\\.(?!\\d)", "")));
             } else {
-                setMoneyAmount(-1);
+                setMoneyAmount(0);
             }
         }
     }

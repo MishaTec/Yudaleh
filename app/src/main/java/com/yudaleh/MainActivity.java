@@ -301,16 +301,21 @@ public class MainActivity extends AppCompatActivity {
 
             case R.id.action_chart_mode:
                 isChartMode = true;
-                chartModeMenuItem.setVisible(!isChartMode);
-                listModeMenuItem.setVisible(isChartMode);
-                actionBar.getSelectedTab().select();
+                chartModeMenuItem.setVisible(false);
+                listModeMenuItem.setVisible(true);
+                if (actionBar != null && actionBar.getSelectedTab() != null) {
+                    actionBar.getSelectedTab().select();
+                }
+
                 break;
 
             case R.id.action_list_mode:
                 isChartMode = false;
-                chartModeMenuItem.setVisible(!isChartMode);
-                listModeMenuItem.setVisible(isChartMode);
-                actionBar.getSelectedTab().select();
+                chartModeMenuItem.setVisible(true);
+                listModeMenuItem.setVisible(false);
+                if (actionBar != null && actionBar.getSelectedTab() != null) {
+                    actionBar.getSelectedTab().select();
+                }
                 break;
 
             case R.id.action_logout:

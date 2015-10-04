@@ -246,7 +246,7 @@ public class ChartFragment extends android.support.v4.app.Fragment {
 
         // note: xIndex must be unique
         for (int i = fromIndex, xIndex = 0; i < toIndex; i++, xIndex++) {
-            int amount = mData.get(i).getMoneyAmount();
+            float amount = mData.get(i).getMoneyAmount();
             yVals.add(new Entry(amount, xIndex));// TODO: 22/09/2015 make sure it's money debt
             totalValue += amount;
         }
