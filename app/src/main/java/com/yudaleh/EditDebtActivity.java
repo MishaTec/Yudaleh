@@ -401,7 +401,7 @@ public class EditDebtActivity extends AppCompatActivity {
             return;
         }
         String currency = spinner1.getItemAtPosition(currencyPos).toString();
-        float amount = debt.getMoneyAmount();
+        double amount = debt.getMoneyAmount();
         if (amount >= 0) {
             debt.setTitle(amount + " " + currency);
         } else {

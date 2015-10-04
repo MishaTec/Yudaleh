@@ -59,7 +59,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
 
     @Override
     public int getChildrenCount(int groupPosition) {
-        return this.mDataChildren.get(this.mDataHeaders.get(groupPosition)).size();
+        return this.mDataChildren.get(this.mDataHeaders.get(groupPosition).getPhone()).size();
     }
 
     @Override
@@ -67,15 +67,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         return this.mDataHeaders.get(groupPosition);
     }
 
-    private Debt getDebtFromPhone(String phone) {
-        List<Debt> debts = mDataChildren.get(phone);
-        if (debts == null || debts.size() == 0) {
-            return null;
-        }
-        return debts.get(0);
-    }
-
-    private double getTotalMoney(String phone) {
+    private double countTotalMoney(String phone) {
         List<Debt> debts = mDataChildren.get(phone);
         if (debts == null || debts.size() == 0) {
             return 0;
@@ -125,7 +117,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         lblListHeader.setText(headerTitle);
 
         if (owner.getTotalMoney() > 0) {
-            convertView.setBackgroundColor(parent.getResources().getColor(mColors.get(groupPosition % mColors.size())));
+            convertView.setBackgroundColor(mColors.get(groupPosition % mColors.size()));
         }
         return convertView;
     }
@@ -164,7 +156,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
 
 
     private ArrayAdapter<Debt> getAdapter(int groupPosition, int childPosition) {
-        return this.mChildrenAdapters.get(this.mDataHeaders.get(groupPosition)).get(childPosition);
+        return this.mChildrenAdapters.get(this.mDataHeaders.get(groupPosition).getPhone()).get(childPosition);
     }
 
     @Override
@@ -202,10 +194,10 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
 
 
     DebtListAdapter(Context context, QueryFactory<Debt> queryFactory) {
-        super(context, queryFactory);
+        super(context, queryFactory);// TODO: 10/5/2015 add order by _
         mContext = context;
 
-        mColors = new ArrayList<Integer>();
+        mColors = new ArrayList<>();
         for (int c : ColorTemplate.VORDIPLOM_COLORS)
             mColors.add(c);
         for (int c : ColorTemplate.JOYFUL_COLORS)
@@ -233,52 +225,62 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
             @Override
             public void onLoaded(List<Debt> debts, Exception e) {
                 if (e == null) {
-                    mDataChildren = new HashMap<>();
-                    mChildrenAdapters = new HashMap<>();
-                    mOwnerNamesCount = new HashMap<>();
-                    mDataHeaders = new ArrayList<>();
-
-                    for (Debt debt : debts) {
-                        String phone = debt.getPhone();
-                        String name = debt.getOwner();
-                        // TODO: 03/10/2015 update existing adapters
-                        ArrayList<Debt> singleItemList = new ArrayList<>();
-                        singleItemList.add(debt);
-                        ArrayAdapter<Debt> swipeAdapter = new DebtSwipeListAdapter(mContext, R.layout.list_item, singleItemList);
-                        if (!mDataChildren.containsKey(phone)) {
-                            List<Debt> debtItems = new ArrayList<>();
-                            debtItems.add(debt);
-                            mDataChildren.put(phone, debtItems);
-
-                            List<ArrayAdapter<Debt>> debtAdapters = new ArrayList<>();
-                            debtAdapters.add(swipeAdapter);
-                            mChildrenAdapters.put(phone, debtAdapters);
-
-                            mDataHeaders.add(new Contact(phone, name, getTotalMoney(phone)));
-                        } else {
-                            mDataChildren.get(phone).add(debt);
-                            mChildrenAdapters.get(phone).add(swipeAdapter);
-                        }
-                        if (!mOwnerNamesCount.containsKey(name)) {
-                            mOwnerNamesCount.put(name, 1);
-                        } else {
-                            mOwnerNamesCount.put(name, mOwnerNamesCount.get(name) + 1);
-                        }
-                    }
-                    Collections.sort(mDataHeaders, new Comparator<Contact>() {
-                        @Override
-                        public int compare(Contact lhs, Contact rhs) {
-                            if (lhs.equals(rhs)) {
-                                return 0;
-                            }
-                            if (lhs.getTotalMoney() > rhs.getTotalMoney()) {
-                                return 1;
-                            } else {
-                                return -1;
-                            }
-                        }
-                    });
+                    extractData(debts);
                     notifyDataSetChanged(); // FIXME: 03/10/2015 index out of bounds when removed
+                }
+            }
+        });
+    }
+
+    private void extractData(List<Debt> debts) {
+        mDataChildren = new HashMap<>();
+        mChildrenAdapters = new HashMap<>();
+        mOwnerNamesCount = new HashMap<>();
+        mDataHeaders = new ArrayList<>();
+
+        for (Debt debt : debts) {
+            String phone = debt.getPhone();
+            String name = debt.getOwner();
+            // TODO: 03/10/2015 update existing adapters
+            ArrayList<Debt> singleItemList = new ArrayList<>();
+            singleItemList.add(debt);
+            ArrayAdapter<Debt> swipeAdapter = new DebtSwipeListAdapter(mContext, R.layout.list_item, singleItemList);
+            if (!mDataChildren.containsKey(phone)) {
+                List<Debt> debtItems = new ArrayList<>();
+                debtItems.add(debt);
+                mDataChildren.put(phone, debtItems);
+
+                List<ArrayAdapter<Debt>> debtAdapters = new ArrayList<>();
+                debtAdapters.add(swipeAdapter);
+                mChildrenAdapters.put(phone, debtAdapters);
+
+                mDataHeaders.add(new Contact(phone, name));
+            } else {
+                mDataChildren.get(phone).add(debt);
+                mChildrenAdapters.get(phone).add(swipeAdapter);
+            }
+            for (Contact contact : mDataHeaders) {
+                contact.setTotalMoney(countTotalMoney(contact.getPhone()));
+            }
+            if (phone!=null) {
+                // count only with phone numbers
+                if (!mOwnerNamesCount.containsKey(name)) {
+                    mOwnerNamesCount.put(name, 1);
+                } else {
+                    mOwnerNamesCount.put(name, mOwnerNamesCount.get(name) + 1);
+                }
+            }
+        }
+        Collections.sort(mDataHeaders, new Comparator<Contact>() {
+            @Override
+            public int compare(Contact lhs, Contact rhs) {
+                if (lhs.equals(rhs)) {
+                    return 0;
+                }
+                if (lhs.getTotalMoney() > rhs.getTotalMoney()) {
+                    return 1;
+                } else {
+                    return -1;
                 }
             }
         });

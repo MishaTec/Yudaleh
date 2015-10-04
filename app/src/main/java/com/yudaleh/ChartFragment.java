@@ -1,7 +1,6 @@
 package com.yudaleh;
 
 
-import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -28,15 +27,14 @@ import com.parse.ParseQuery;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 
-/**
- * A simple {@link Fragment} subclass.
- */
 public class ChartFragment extends android.support.v4.app.Fragment {
 
     private static final int DEFAULT_UPPER_INDEX = 5;
-    private static final int DEFAULT_lOWER_INDEX = 0;
+    private static final int DEFAULT_LOWER_INDEX = 0;
 
     private View mRoot;
 
@@ -47,9 +45,32 @@ public class ChartFragment extends android.support.v4.app.Fragment {
     private TextView tvXMin;
 
     MenuItem editModeMenuItem;
-    Debt selectedDebt;
+    Contact selectedContact;
 
-    private List<Debt> mData;
+    private final ArrayList<Integer> mColors;
+    private List<Contact> mDataHeaders;
+    private HashMap<String, Integer> mOwnerNamesCount;
+    private HashMap<String, List<Debt>> mDataChildren;
+
+    public ChartFragment() {
+        mColors = new ArrayList<>();
+        for (int c : ColorTemplate.VORDIPLOM_COLORS)
+            mColors.add(c);
+
+        for (int c : ColorTemplate.JOYFUL_COLORS)
+            mColors.add(c);
+
+        for (int c : ColorTemplate.COLORFUL_COLORS)
+            mColors.add(c);
+
+        for (int c : ColorTemplate.LIBERTY_COLORS)
+            mColors.add(c);
+
+        for (int c : ColorTemplate.PASTEL_COLORS)
+            mColors.add(c);
+
+        mColors.add(ColorTemplate.getHoloBlue());
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -105,12 +126,13 @@ public class ChartFragment extends android.support.v4.app.Fragment {
                 if (e == null) {
                     return;
                 }
-                selectedDebt = mData.get(e.getXIndex());
+                selectedContact = mDataHeaders.get(e.getXIndex());
                 editModeMenuItem.setVisible(true);
             }
 
             @Override
             public void onNothingSelected() {
+                // TODO: 10/5/2015 another chart
                 editModeMenuItem.setVisible(false);
             }
         });
@@ -123,15 +145,15 @@ public class ChartFragment extends android.support.v4.app.Fragment {
         mSeekBarXMin = (SeekBar) v.findViewById(R.id.seekBar2);
 
         mSeekBarXMax.setProgress(DEFAULT_UPPER_INDEX);
-        mSeekBarXMin.setProgress(DEFAULT_lOWER_INDEX);
+        mSeekBarXMin.setProgress(DEFAULT_LOWER_INDEX);
 
         mSeekBarXMax.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                tvXMax.setText("" + (progress + 1));
+                tvXMax.setText(""+(progress + 1));
                 if (mSeekBarXMin.getProgress() > progress) { // FIXME: 22/09/2015
                     mSeekBarXMin.setProgress(progress);
-                    tvXMin.setText("" + (progress + 1));
+                    tvXMin.setText(""+(progress + 1));
                 }
                 setData(mSeekBarXMin.getProgress(), progress + 1);
             }
@@ -150,10 +172,10 @@ public class ChartFragment extends android.support.v4.app.Fragment {
         mSeekBarXMin.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                tvXMin.setText("" + (progress + 1));
+                tvXMin.setText(""+(progress + 1));
                 if (mSeekBarXMax.getProgress() < progress) { // FIXME: 22/09/2015
                     mSeekBarXMax.setProgress(progress);
-                    tvXMax.setText("" + (progress + 1));
+                    tvXMax.setText(""+(progress + 1));
                 }
                 setData(progress, mSeekBarXMax.getProgress() + 1);
             }
@@ -186,26 +208,89 @@ public class ChartFragment extends android.support.v4.app.Fragment {
             mQuery.whereNotEqualTo(Debt.KEY_CURRENCY_POS, Debt.NON_MONEY_DEBT_CURRENCY);
             mQuery.orderByDescending(Debt.KEY_MONEY_AMOUNT);
             mQuery.fromLocalDatastore();
-            mData = mQuery.find();
+            extractData(mQuery.find());
         } catch (ParseException e) {
             e.printStackTrace();
+            // init to prevent null exception
+            mDataChildren = new HashMap<>();
+            mOwnerNamesCount = new HashMap<>();
+            mDataHeaders = new ArrayList<>();
         }
 
         int maxProgress;
-        if (mData != null) {
-            maxProgress = mData.size() - 1;
+        if (mDataHeaders != null) {
+            maxProgress = mDataHeaders.size() - 1;
         } else {
-            // Make sure the app does not crash. Use old value instead
+            // Makes sure the app does not crash - uses old value instead
             maxProgress = mSeekBarXMax.getMax() - 1;
         }
         mSeekBarXMax.setMax(maxProgress);
         mSeekBarXMin.setMax(maxProgress);
         mSeekBarXMax.setProgress(maxProgress);
         mSeekBarXMin.setProgress(0);
-        tvXMax.setText("" + (mSeekBarXMax.getProgress() + 1));
-        tvXMin.setText("" + (mSeekBarXMin.getProgress() + 1));
+        tvXMax.setText(""+(mSeekBarXMax.getProgress() + 1));
+        tvXMin.setText(""+(mSeekBarXMin.getProgress() + 1));
         setData(mSeekBarXMin.getProgress(), mSeekBarXMax.getProgress() + 1);
     }
+
+    // TODO: 10/5/2015 use only once, no need to accesses database again
+    private void extractData(List<Debt> debts) {
+        mDataChildren = new HashMap<>();
+        mOwnerNamesCount = new HashMap<>();
+        mDataHeaders = new ArrayList<>();
+
+        for (Debt debt : debts) {
+            String phone = debt.getPhone();
+            String name = debt.getOwner();
+            // TODO: 03/10/2015 update existing adapters
+            if (!mDataChildren.containsKey(phone)) {
+                List<Debt> debtItems = new ArrayList<>();
+                debtItems.add(debt);
+                mDataChildren.put(phone, debtItems);
+
+                mDataHeaders.add(new Contact(phone, name));
+            } else {
+                mDataChildren.get(phone).add(debt);
+            }
+            if (phone != null) {
+                // Counts only with phone numbers
+                if (!mOwnerNamesCount.containsKey(name)) {
+                    mOwnerNamesCount.put(name, 1);
+                } else {
+                    mOwnerNamesCount.put(name, mOwnerNamesCount.get(name) + 1);
+                }
+            }
+        }
+        for (Contact contact : mDataHeaders) {
+            contact.setTotalMoney(countTotalMoney(contact.getPhone()));
+        }
+        Collections.sort(mDataHeaders, new Comparator<Contact>() {
+            @Override
+            public int compare(Contact lhs, Contact rhs) {
+                if (lhs.equals(rhs)) {
+                    return 0;
+                }
+                if (lhs.getTotalMoney() > rhs.getTotalMoney()) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            }
+        });
+    }
+
+    private double countTotalMoney(String phone) {
+        List<Debt> debts = mDataChildren.get(phone);
+        if (debts == null || debts.size() == 0) {
+            return 0;
+        }
+        double total = 0;
+        for (Debt debt : debts) {
+            total += debt.getMoneyAmount();
+        }
+        return total;
+    }
+
 
 //    @Override // TODO: 23/09/2015 separate menu
 //    public void onCreateOptionsMenu(Menu menu,MenuInflater inflater) {
@@ -223,7 +308,7 @@ public class ChartFragment extends android.support.v4.app.Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_edit_mode:
-                openEditView(selectedDebt);
+                openEditView(selectedContact);
                 break;
             default:
                 break;
@@ -232,13 +317,13 @@ public class ChartFragment extends android.support.v4.app.Fragment {
     }
 
     private void setData(int fromIndex, int toIndex) {
-        int totalValue = 0;
-        String centerText=null;
+        double totalValue = 0;
+        String centerText = null;
 
         if (fromIndex > toIndex) {
             toIndex = fromIndex + 1;
         }
-        if (mData == null || mData.size() <= 0) {
+        if (mDataHeaders == null || mDataHeaders.size() == 0) {
             toIndex = 0;
             centerText = "Add money debts in list mode.";
         }
@@ -246,41 +331,22 @@ public class ChartFragment extends android.support.v4.app.Fragment {
 
         // note: xIndex must be unique
         for (int i = fromIndex, xIndex = 0; i < toIndex; i++, xIndex++) {
-            float amount = mData.get(i).getMoneyAmount();
-            yVals.add(new Entry(amount, xIndex));// TODO: 22/09/2015 make sure it's money debt
+            double amount = mDataHeaders.get(i).getTotalMoney();
+            yVals.add(new Entry((float) amount, xIndex));// TODO: 22/09/2015 make sure it's money debt
             totalValue += amount;
         }
 
-        ArrayList<String> xVals = new ArrayList<String>();
+        ArrayList<String> xVals = new ArrayList<>();
 
         for (int i = fromIndex; i < toIndex; i++) {
-            xVals.add(mData.get(i).getOwner());
+            xVals.add(mDataHeaders.get(i).getName());
         }
 
         PieDataSet dataSet = new PieDataSet(yVals, getTag() + " debts");// TODO: 22/09/2015 by tag
         dataSet.setSliceSpace(3f);
         dataSet.setSelectionShift(5f);
 
-        // add some colors
-        ArrayList<Integer> colors = new ArrayList<Integer>();
-
-        for (int c : ColorTemplate.VORDIPLOM_COLORS)
-            colors.add(c);
-
-        for (int c : ColorTemplate.JOYFUL_COLORS)
-            colors.add(c);
-
-        for (int c : ColorTemplate.COLORFUL_COLORS)
-            colors.add(c);
-
-        for (int c : ColorTemplate.LIBERTY_COLORS)
-            colors.add(c);
-
-        for (int c : ColorTemplate.PASTEL_COLORS)
-            colors.add(c);
-
-        colors.add(ColorTemplate.getHoloBlue());
-
+        ArrayList<Integer> colors = new ArrayList<>(mColors);
         Collections.rotate(colors, -fromIndex);
         dataSet.setColors(colors);
 
@@ -288,7 +354,7 @@ public class ChartFragment extends android.support.v4.app.Fragment {
         data.setValueFormatter(new PercentFormatter());
         data.setValueTextSize(10f);
 
-        if(centerText==null){
+        if (centerText == null) {
             // list not empty
             centerText = "Total Value\n" + totalValue + "\n(all slices)";
         }
@@ -303,7 +369,17 @@ public class ChartFragment extends android.support.v4.app.Fragment {
     }
 
     // Helper methods: -----------------------------------------------------------------------------
-    private void openEditView(Debt debt) {
+    private void openEditView(Contact contact) {
+        List<Debt> debts = mDataChildren.get(contact.getPhone());
+        if (debts == null || debts.size() == 0) {
+            return; // just in case ;)
+        }
+        Debt debt;
+        if (debts.size() == 1) {
+            debt = debts.get(0);
+        } else {
+            debt = debts.get(0);// TODO: 10/5/2015 open detailed chart on select header
+        }
         Intent i = new Intent(getActivity().getApplicationContext(), EditDebtActivity.class);
         i.putExtra(Debt.KEY_UUID, debt.getUuidString());
         i.putExtra(Debt.KEY_TAB_TAG, debt.getTabTag());

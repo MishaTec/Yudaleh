@@ -8,6 +8,11 @@ class Contact {
     private String name;
     private double totalMoney;
 
+    public Contact(String phone, String name) {
+        this.phone = phone;
+        this.name = name;
+    }
+
     public Contact(String phone, String name, double totalMoney) {
         this.phone = phone;
         this.name = name;
