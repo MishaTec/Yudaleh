@@ -8,38 +8,38 @@ class Contact {
     private String name;
     private double totalMoney;
 
-    public Contact(String phone, String name) {
+    Contact(String phone, String name) {
         this.phone = phone;
         this.name = name;
     }
 
-    public Contact(String phone, String name, double totalMoney) {
+    Contact(String phone, String name, double totalMoney) {
         this.phone = phone;
         this.name = name;
         this.totalMoney = totalMoney;
     }
 
-    public String getPhone() {
+    String getPhone() {
         return phone;
     }
 
-    public void setPhone(String phone) {
+    void setPhone(String phone) {
         this.phone = phone;
     }
 
-    public String getName() {
+    String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    void setName(String name) {
         this.name = name;
     }
 
-    public double getTotalMoney() {
+    double getTotalMoney() {
         return totalMoney;
     }
 
-    public void setTotalMoney(double totalMoney) {
+    void setTotalMoney(double totalMoney) {
         this.totalMoney = totalMoney;
     }
 
@@ -55,5 +55,9 @@ class Contact {
         return EqualsUtil.areEqual(phone, other.phone)
                 && EqualsUtil.areEqual(name, other.name)
                 && EqualsUtil.areEqual(totalMoney, other.totalMoney);
+    }
+
+    String getMapKey() {
+        return phone != null ? phone : name;
     }
 }

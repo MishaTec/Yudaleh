@@ -9,9 +9,9 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.edmodo.rangebar.RangeBar;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.Entry;
@@ -31,18 +31,15 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
+// TODO: 05/10/2015 onSaveInstanceState, onRestoreInstanceState
 public class ChartFragment extends android.support.v4.app.Fragment {
-
-    private static final int DEFAULT_UPPER_INDEX = 5;
-    private static final int DEFAULT_LOWER_INDEX = 0;
 
     private View mRoot;
 
     private PieChart mChart;
-    private SeekBar mSeekBarXMax;
-    private SeekBar mSeekBarXMin;
-    private TextView tvXMax;
-    private TextView tvXMin;
+    private RangeBar rangeBar;
+    private TextView maxDebtIndex;
+    private TextView minDebtIndex;
 
     MenuItem editModeMenuItem;
     Contact selectedContact;
@@ -50,6 +47,7 @@ public class ChartFragment extends android.support.v4.app.Fragment {
     private final ArrayList<Integer> mColors;
     private List<Contact> mDataHeaders;
     private HashMap<String, Integer> mOwnerNamesCount;
+    private HashMap<String, Integer> mOwnerNamesCountNoPhone;
     private HashMap<String, List<Debt>> mDataChildren;
 
     public ChartFragment() {
@@ -86,7 +84,7 @@ public class ChartFragment extends android.support.v4.app.Fragment {
 
         View v = inflater.inflate(R.layout.fragment_chart, container, false);
 
-        mChart = (PieChart) v.findViewById(R.id.pieChart1);
+        mChart = (PieChart) v.findViewById(R.id.pie_chart);
         mChart.setDescription("");
 
         mChart.setOnChartGestureListener(new OnChartGestureListener() {
@@ -138,56 +136,22 @@ public class ChartFragment extends android.support.v4.app.Fragment {
         });
 
 
-        tvXMax = (TextView) v.findViewById(R.id.tvXMax);
-        tvXMin = (TextView) v.findViewById(R.id.tvXMin);
+        maxDebtIndex = (TextView) v.findViewById(R.id.max_debt_index);
+        minDebtIndex = (TextView) v.findViewById(R.id.min_debt_index);
 
-        mSeekBarXMax = (SeekBar) v.findViewById(R.id.seekBar1);
-        mSeekBarXMin = (SeekBar) v.findViewById(R.id.seekBar2);
+        rangeBar = (RangeBar) v.findViewById(R.id.rangeBar);
 
-        mSeekBarXMax.setProgress(DEFAULT_UPPER_INDEX);
-        mSeekBarXMin.setProgress(DEFAULT_LOWER_INDEX);
+        rangeBar.setBarColor(getResources().getColor(R.color.primary));
 
-        mSeekBarXMax.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        rangeBar.setThumbColorNormal(getResources().getColor(R.color.accent));
+        rangeBar.setThumbColorPressed(getResources().getColor(R.color.accent_pressed));
+
+        rangeBar.setOnRangeBarChangeListener(new RangeBar.OnRangeBarChangeListener() {
             @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                tvXMax.setText(""+(progress + 1));
-                if (mSeekBarXMin.getProgress() > progress) { // FIXME: 22/09/2015
-                    mSeekBarXMin.setProgress(progress);
-                    tvXMin.setText(""+(progress + 1));
-                }
-                setData(mSeekBarXMin.getProgress(), progress + 1);
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
-
-        mSeekBarXMin.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                tvXMin.setText(""+(progress + 1));
-                if (mSeekBarXMax.getProgress() < progress) { // FIXME: 22/09/2015
-                    mSeekBarXMax.setProgress(progress);
-                    tvXMax.setText(""+(progress + 1));
-                }
-                setData(progress, mSeekBarXMax.getProgress() + 1);
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
+            public void onIndexChangeListener(RangeBar rangeBar, int leftThumbIndex, int rightThumbIndex) {
+                minDebtIndex.setText(String.valueOf(leftThumbIndex+1));
+                maxDebtIndex.setText(String.valueOf(rightThumbIndex+1));
+                setData(leftThumbIndex, rightThumbIndex);
             }
         });
 
@@ -214,55 +178,59 @@ public class ChartFragment extends android.support.v4.app.Fragment {
             // init to prevent null exception
             mDataChildren = new HashMap<>();
             mOwnerNamesCount = new HashMap<>();
+            mOwnerNamesCountNoPhone = new HashMap<>();
             mDataHeaders = new ArrayList<>();
         }
 
-        int maxProgress;
         if (mDataHeaders != null) {
-            maxProgress = mDataHeaders.size() - 1;
+            rangeBar.setTickCount(mDataHeaders.size());
         } else {
-            // Makes sure the app does not crash - uses old value instead
-            maxProgress = mSeekBarXMax.getMax() - 1;
+            rangeBar.setTickCount(0);
         }
-        mSeekBarXMax.setMax(maxProgress);
-        mSeekBarXMin.setMax(maxProgress);
-        mSeekBarXMax.setProgress(maxProgress);
-        mSeekBarXMin.setProgress(0);
-        tvXMax.setText(""+(mSeekBarXMax.getProgress() + 1));
-        tvXMin.setText(""+(mSeekBarXMin.getProgress() + 1));
-        setData(mSeekBarXMin.getProgress(), mSeekBarXMax.getProgress() + 1);
+        setData(rangeBar.getLeftIndex(), rangeBar.getRightIndex());
     }
 
     // TODO: 10/5/2015 use only once, no need to accesses database again
     private void extractData(List<Debt> debts) {
         mDataChildren = new HashMap<>();
         mOwnerNamesCount = new HashMap<>();
+        mOwnerNamesCountNoPhone = new HashMap<>();
         mDataHeaders = new ArrayList<>();
 
         for (Debt debt : debts) {
             String phone = debt.getPhone();
+            // TODO: 05/10/2015 dialog for merging non-phone debts
             String name = debt.getOwner();
+            Contact contact = new Contact(phone, name);
+            String key = contact.getMapKey();
+
             // TODO: 03/10/2015 update existing adapters
-            if (!mDataChildren.containsKey(phone)) {
+            if (!mDataChildren.containsKey(key)) {
                 List<Debt> debtItems = new ArrayList<>();
                 debtItems.add(debt);
-                mDataChildren.put(phone, debtItems);
+                mDataChildren.put(key, debtItems);
 
-                mDataHeaders.add(new Contact(phone, name));
+                mDataHeaders.add(contact);
             } else {
-                mDataChildren.get(phone).add(debt);
+                mDataChildren.get(key).add(debt);
+            }
+
+            for (Contact c : mDataHeaders) {
+                c.setTotalMoney(countTotalMoney(c.getMapKey()));
             }
             if (phone != null) {
-                // Counts only with phone numbers
                 if (!mOwnerNamesCount.containsKey(name)) {
                     mOwnerNamesCount.put(name, 1);
                 } else {
                     mOwnerNamesCount.put(name, mOwnerNamesCount.get(name) + 1);
                 }
+            } else {
+                if (!mOwnerNamesCountNoPhone.containsKey(name)) {
+                    mOwnerNamesCountNoPhone.put(name, 1);
+                } else {
+                    mOwnerNamesCountNoPhone.put(name, mOwnerNamesCountNoPhone.get(name) + 1);
+                }
             }
-        }
-        for (Contact contact : mDataHeaders) {
-            contact.setTotalMoney(countTotalMoney(contact.getPhone()));
         }
         Collections.sort(mDataHeaders, new Comparator<Contact>() {
             @Override
@@ -279,8 +247,8 @@ public class ChartFragment extends android.support.v4.app.Fragment {
         });
     }
 
-    private double countTotalMoney(String phone) {
-        List<Debt> debts = mDataChildren.get(phone);
+    private double countTotalMoney(String key) {
+        List<Debt> debts = mDataChildren.get(key);
         if (debts == null || debts.size() == 0) {
             return 0;
         }
@@ -308,7 +276,7 @@ public class ChartFragment extends android.support.v4.app.Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_edit_mode:
-                openEditView(selectedContact);
+                openEditView(selectedContact.getMapKey());
                 break;
             default:
                 break;
@@ -321,7 +289,7 @@ public class ChartFragment extends android.support.v4.app.Fragment {
         String centerText = null;
 
         if (fromIndex > toIndex) {
-            toIndex = fromIndex + 1;
+            toIndex = fromIndex;
         }
         if (mDataHeaders == null || mDataHeaders.size() == 0) {
             toIndex = 0;
@@ -330,7 +298,7 @@ public class ChartFragment extends android.support.v4.app.Fragment {
         ArrayList<Entry> yVals = new ArrayList<>();
 
         // note: xIndex must be unique
-        for (int i = fromIndex, xIndex = 0; i < toIndex; i++, xIndex++) {
+        for (int i = fromIndex, xIndex = 0; i <= toIndex; i++, xIndex++) {
             double amount = mDataHeaders.get(i).getTotalMoney();
             yVals.add(new Entry((float) amount, xIndex));// TODO: 22/09/2015 make sure it's money debt
             totalValue += amount;
@@ -338,7 +306,7 @@ public class ChartFragment extends android.support.v4.app.Fragment {
 
         ArrayList<String> xVals = new ArrayList<>();
 
-        for (int i = fromIndex; i < toIndex; i++) {
+        for (int i = fromIndex; i <= toIndex; i++) {
             xVals.add(mDataHeaders.get(i).getName());
         }
 
@@ -369,8 +337,8 @@ public class ChartFragment extends android.support.v4.app.Fragment {
     }
 
     // Helper methods: -----------------------------------------------------------------------------
-    private void openEditView(Contact contact) {
-        List<Debt> debts = mDataChildren.get(contact.getPhone());
+    private void openEditView(String key) {
+        List<Debt> debts = mDataChildren.get(key);
         if (debts == null || debts.size() == 0) {
             return; // just in case ;)
         }

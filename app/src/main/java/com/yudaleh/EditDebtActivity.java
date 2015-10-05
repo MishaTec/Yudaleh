@@ -228,7 +228,7 @@ public class EditDebtActivity extends AppCompatActivity {
                     break;
                 }
                 setDebtFieldsAfterEditing();
-                if (debt.getPhone() != null && (isNew || isModified)) {
+                if ((isNew || isModified)&&isExistingUser(debt.getPhone())) {
                     if (pushCheckBox.isChecked()) {// TODO: 24/09/2015 settings
                         sendPushToOwner();// TODO: 9/30/2015  auto receive push if modified (update existing)
                     }
@@ -239,6 +239,17 @@ public class EditDebtActivity extends AppCompatActivity {
                 break;
             default:
                 break;
+        }
+        return false;
+    }
+
+    private boolean isExistingUser(String phone) {
+        ParseQuery<ParseUser> query = ParseUser.getQuery();
+        query.whereEqualTo("phone", phone);
+        try {
+            List<ParseUser> users = query.find();
+        } catch (ParseException e) {
+            return false;
         }
         return false;
     }

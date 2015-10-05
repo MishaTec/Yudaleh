@@ -36,6 +36,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
     private HashMap<String, List<ArrayAdapter<Debt>>> mChildrenAdapters;
     private List<Contact> mDataHeaders;
     private HashMap<String, Integer> mOwnerNamesCount;
+    private HashMap<String, Integer> mOwnerNamesCountNoPhone;
     private HashMap<String, List<Debt>> mDataChildren;
 
     // TODO: 29/09/2015 pinned heads
@@ -59,7 +60,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
 
     @Override
     public int getChildrenCount(int groupPosition) {
-        return this.mDataChildren.get(this.mDataHeaders.get(groupPosition).getPhone()).size();
+        return this.mDataChildren.get(this.mDataHeaders.get(groupPosition).getMapKey()).size();
     }
 
     @Override
@@ -67,8 +68,8 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         return this.mDataHeaders.get(groupPosition);
     }
 
-    private double countTotalMoney(String phone) {
-        List<Debt> debts = mDataChildren.get(phone);
+    private double countTotalMoney(String key) {
+        List<Debt> debts = mDataChildren.get(key);
         if (debts == null || debts.size() == 0) {
             return 0;
         }
@@ -81,7 +82,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
 
     @Override
     public Object getChild(int groupPosition, int childPosition) {
-        return this.mDataChildren.get(this.mDataHeaders.get(groupPosition).getPhone()).get(childPosition);
+        return this.mDataChildren.get(this.mDataHeaders.get(groupPosition).getMapKey()).get(childPosition);
     }
 
     @Override
@@ -97,6 +98,8 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
         Contact owner = (Contact) getGroup(groupPosition);
+        String phone = owner.getPhone();
+        String name = owner.getName();
 
         if (convertView == null) {
             LayoutInflater infalInflater = (LayoutInflater) mContext
@@ -104,13 +107,12 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
             convertView = infalInflater.inflate(R.layout.list_group, null);
         }
 
-        String headerTitle = owner.getName();
-        String phone = owner.getPhone();
-        if (phone == null || headerTitle == null) {
-            headerTitle = mContext.getString(R.string.no_phone_list_group);
-        } else if (mOwnerNamesCount.get(headerTitle) > 1) {
+        String headerTitle = name;
+        if (phone!=null && mOwnerNamesCount.get(name) > 1) {
             headerTitle += " (" + phone + ")";
         }
+        // TODO: 05/10/2015 unique identifier for not merged non-money debts
+
         TextView lblListHeader = (TextView) convertView
                 .findViewById(R.id.lblListHeader);
         lblListHeader.setTypeface(null, Typeface.BOLD);
@@ -156,7 +158,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
 
 
     private ArrayAdapter<Debt> getAdapter(int groupPosition, int childPosition) {
-        return this.mChildrenAdapters.get(this.mDataHeaders.get(groupPosition).getPhone()).get(childPosition);
+        return this.mChildrenAdapters.get(this.mDataHeaders.get(groupPosition).getMapKey()).get(childPosition);
     }
 
     @Override
@@ -215,6 +217,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         mDataChildren = new HashMap<>();
         mChildrenAdapters = new HashMap<>();
         mOwnerNamesCount = new HashMap<>();
+        mOwnerNamesCountNoPhone = new HashMap<>();
 
         addOnQueryLoadListener(new OnQueryLoadListener<Debt>() {
             @Override
@@ -236,38 +239,49 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         mDataChildren = new HashMap<>();
         mChildrenAdapters = new HashMap<>();
         mOwnerNamesCount = new HashMap<>();
+        mOwnerNamesCountNoPhone = new HashMap<>();
         mDataHeaders = new ArrayList<>();
 
         for (Debt debt : debts) {
             String phone = debt.getPhone();
             String name = debt.getOwner();
+            Contact contact  = new Contact(phone, name);
+            String key = contact.getMapKey();
+
             // TODO: 03/10/2015 update existing adapters
             ArrayList<Debt> singleItemList = new ArrayList<>();
             singleItemList.add(debt);
             ArrayAdapter<Debt> swipeAdapter = new DebtSwipeListAdapter(mContext, R.layout.list_item, singleItemList);
-            if (!mDataChildren.containsKey(phone)) {
-                List<Debt> debtItems = new ArrayList<>();
-                debtItems.add(debt);
-                mDataChildren.put(phone, debtItems);
+                if (!mDataChildren.containsKey(key)) {
+                    List<Debt> debtItems = new ArrayList<>();
+                    debtItems.add(debt);
+                    mDataChildren.put(key, debtItems);
 
-                List<ArrayAdapter<Debt>> debtAdapters = new ArrayList<>();
-                debtAdapters.add(swipeAdapter);
-                mChildrenAdapters.put(phone, debtAdapters);
+                    List<ArrayAdapter<Debt>> debtAdapters = new ArrayList<>();
+                    debtAdapters.add(swipeAdapter);
+                    mChildrenAdapters.put(key, debtAdapters);
 
-                mDataHeaders.add(new Contact(phone, name));
-            } else {
-                mDataChildren.get(phone).add(debt);
-                mChildrenAdapters.get(phone).add(swipeAdapter);
-            }
-            for (Contact contact : mDataHeaders) {
-                contact.setTotalMoney(countTotalMoney(contact.getPhone()));
+                    mDataHeaders.add(contact);
+                } else {
+                    mDataChildren.get(key).add(debt);
+                    mChildrenAdapters.get(key).add(swipeAdapter);
+                }
+
+            for (Contact c : mDataHeaders) {
+                c.setTotalMoney(countTotalMoney(c.getMapKey()));
             }
             if (phone!=null) {
-                // count only with phone numbers
                 if (!mOwnerNamesCount.containsKey(name)) {
                     mOwnerNamesCount.put(name, 1);
                 } else {
                     mOwnerNamesCount.put(name, mOwnerNamesCount.get(name) + 1);
+                }
+            }else{
+                if (!mOwnerNamesCountNoPhone.containsKey(name)) {
+                    mOwnerNamesCountNoPhone.put(name, 1);
+                } else {
+                    // TODO: 05/10/2015 dialog
+                    mOwnerNamesCountNoPhone.put(name, mOwnerNamesCountNoPhone.get(name) + 1);
                 }
             }
         }
