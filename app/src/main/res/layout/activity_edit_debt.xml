@@ -20,8 +20,7 @@
             android:hint="@string/debt_title_hint"
             android:inputType="textCapSentences"
             android:nextFocusDown="@+id/debt_owner"
-            android:paddingTop="30dp"
-            android:windowSoftInputMode="stateHidden" />
+            android:paddingTop="30dp" />
 
         <Spinner
             android:id="@+id/spinner1"
@@ -36,7 +35,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:hint="@string/debt_owner_hint"
-            android:inputType="textPersonName"
+            android:inputType="textCapWords"
             android:nextFocusDown="@+id/debt_phone"
             android:paddingTop="30dp" />
 

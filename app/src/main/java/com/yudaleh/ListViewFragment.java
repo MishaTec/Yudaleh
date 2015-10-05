@@ -71,25 +71,7 @@ public class ListViewFragment extends android.support.v4.app.Fragment {
                 startActivityForResult(i , MainActivity.EDIT_ACTIVITY_CODE);
             }
         });
-        fab.attachToListView(listView, new ScrollDirectionListener() {// REMOVE: 07/09/2015 listener
-            @Override
-            public void onScrollDown() {
-
-            }
-
-            @Override
-            public void onScrollUp() {
-
-            }
-        }, new AbsListView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(AbsListView view, int scrollState) {
-            }
-
-            @Override
-            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-            }
-        });
+        fab.attachToListView(listView, null);
 
         mRoot = root;
         return root;

@@ -2,6 +2,7 @@ package com.yudaleh;
 
 
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -9,6 +10,8 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.ScaleAnimation;
 import android.widget.TextView;
 
 import com.edmodo.rangebar.RangeBar;
@@ -22,6 +25,7 @@ import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartGestureListener;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
+import com.melnykov.fab.FloatingActionButton;
 import com.parse.ParseException;
 import com.parse.ParseQuery;
 
@@ -34,6 +38,7 @@ import java.util.List;
 // TODO: 05/10/2015 onSaveInstanceState, onRestoreInstanceState
 public class ChartFragment extends android.support.v4.app.Fragment {
 
+    private static final int RANGE_BAR_MIN_TICK_COUNT = 2;
     private View mRoot;
 
     private PieChart mChart;
@@ -49,6 +54,8 @@ public class ChartFragment extends android.support.v4.app.Fragment {
     private HashMap<String, Integer> mOwnerNamesCount;
     private HashMap<String, Integer> mOwnerNamesCountNoPhone;
     private HashMap<String, List<Debt>> mDataChildren;
+    private int mMaxDebtIndex;
+    private FloatingActionButton fab;
 
     public ChartFragment() {
         mColors = new ArrayList<>();
@@ -135,13 +142,25 @@ public class ChartFragment extends android.support.v4.app.Fragment {
             }
         });
 
+        fab = (FloatingActionButton) v.findViewById(R.id.fab2);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(getActivity().getApplicationContext(), EditDebtActivity.class);
+                i.putExtra(Debt.KEY_TAB_TAG, getTag());
+                startActivityForResult(i, MainActivity.EDIT_ACTIVITY_CODE);
+            }
+        });
+
+        switchFabMode(getResources().getDrawable(R.drawable.ic_mode_edit_white_24dp));
 
         maxDebtIndex = (TextView) v.findViewById(R.id.max_debt_index);
         minDebtIndex = (TextView) v.findViewById(R.id.min_debt_index);
 
         rangeBar = (RangeBar) v.findViewById(R.id.rangeBar);
 
-        rangeBar.setBarColor(getResources().getColor(R.color.primary));
+        rangeBar.setBarColor(getResources().getColor(R.color.primary_dark));
+        rangeBar.setConnectingLineColor(getResources().getColor(R.color.primary));
 
         rangeBar.setThumbColorNormal(getResources().getColor(R.color.accent));
         rangeBar.setThumbColorPressed(getResources().getColor(R.color.accent_pressed));
@@ -149,8 +168,9 @@ public class ChartFragment extends android.support.v4.app.Fragment {
         rangeBar.setOnRangeBarChangeListener(new RangeBar.OnRangeBarChangeListener() {
             @Override
             public void onIndexChangeListener(RangeBar rangeBar, int leftThumbIndex, int rightThumbIndex) {
-                minDebtIndex.setText(String.valueOf(leftThumbIndex+1));
-                maxDebtIndex.setText(String.valueOf(rightThumbIndex+1));
+                rightThumbIndex = Math.min(rightThumbIndex, mMaxDebtIndex);
+                minDebtIndex.setText(String.valueOf(leftThumbIndex + 1));
+                maxDebtIndex.setText(String.valueOf(rightThumbIndex + 1));
                 setData(leftThumbIndex, rightThumbIndex);
             }
         });
@@ -160,6 +180,47 @@ public class ChartFragment extends android.support.v4.app.Fragment {
 
         mRoot = v;
         return v;
+    }
+
+    private void switchFabMode(final Drawable icon) {
+        final ScaleAnimation growAnim = new ScaleAnimation(0.1f, 1.0f, 0.1f, 1.0f);
+        final ScaleAnimation shrinkAnim = new ScaleAnimation(1.0f, 0.1f, 1.0f, 0.1f);
+
+        growAnim.setDuration(500);
+        shrinkAnim.setDuration(500);
+
+        fab.setAnimation(shrinkAnim);
+        shrinkAnim.start();
+
+        shrinkAnim.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                fab.setImageDrawable(icon);
+                fab.setAnimation(growAnim);
+                growAnim.start();
+            }
+        });
+        growAnim.setAnimationListener(new Animation.AnimationListener()
+        {
+            @Override
+            public void onAnimationStart(Animation animation){}
+
+            @Override
+            public void onAnimationRepeat(Animation animation){}
+
+            @Override
+            public void onAnimationEnd(Animation animation)
+            {
+            }
+        });
     }
 
 
@@ -183,11 +244,16 @@ public class ChartFragment extends android.support.v4.app.Fragment {
         }
 
         if (mDataHeaders != null) {
-            rangeBar.setTickCount(mDataHeaders.size());
+            mMaxDebtIndex = mDataHeaders.size() - 1;
         } else {
-            rangeBar.setTickCount(0);
+            mMaxDebtIndex = -1;
         }
-        setData(rangeBar.getLeftIndex(), rangeBar.getRightIndex());
+        rangeBar.setTickCount(Math.max(mMaxDebtIndex, RANGE_BAR_MIN_TICK_COUNT));
+        int rightThumbIndex = Math.min(rangeBar.getRightIndex(), mMaxDebtIndex);
+        int leftThumbIndex = rangeBar.getLeftIndex();
+        minDebtIndex.setText(String.valueOf(leftThumbIndex + 1));
+        maxDebtIndex.setText(String.valueOf(rightThumbIndex + 1));
+        setData(leftThumbIndex, rightThumbIndex);
     }
 
     // TODO: 10/5/2015 use only once, no need to accesses database again
@@ -284,21 +350,12 @@ public class ChartFragment extends android.support.v4.app.Fragment {
         return super.onOptionsItemSelected(item);
     }
 
-    private void setData(int fromIndex, int toIndex) {
+    private void setData(int leftIndex, int rightIndex) {
         double totalValue = 0;
-        String centerText = null;
-
-        if (fromIndex > toIndex) {
-            toIndex = fromIndex;
-        }
-        if (mDataHeaders == null || mDataHeaders.size() == 0) {
-            toIndex = 0;
-            centerText = "Add money debts in list mode.";
-        }
         ArrayList<Entry> yVals = new ArrayList<>();
 
         // note: xIndex must be unique
-        for (int i = fromIndex, xIndex = 0; i <= toIndex; i++, xIndex++) {
+        for (int i = leftIndex, xIndex = 0; i <= rightIndex; i++, xIndex++) {
             double amount = mDataHeaders.get(i).getTotalMoney();
             yVals.add(new Entry((float) amount, xIndex));// TODO: 22/09/2015 make sure it's money debt
             totalValue += amount;
@@ -306,7 +363,7 @@ public class ChartFragment extends android.support.v4.app.Fragment {
 
         ArrayList<String> xVals = new ArrayList<>();
 
-        for (int i = fromIndex; i <= toIndex; i++) {
+        for (int i = leftIndex; i <= rightIndex; i++) {
             xVals.add(mDataHeaders.get(i).getName());
         }
 
@@ -315,18 +372,20 @@ public class ChartFragment extends android.support.v4.app.Fragment {
         dataSet.setSelectionShift(5f);
 
         ArrayList<Integer> colors = new ArrayList<>(mColors);
-        Collections.rotate(colors, -fromIndex);
+        Collections.rotate(colors, -leftIndex);
         dataSet.setColors(colors);
 
         PieData data = new PieData(xVals, dataSet);
         data.setValueFormatter(new PercentFormatter());
         data.setValueTextSize(10f);
 
-        if (centerText == null) {
-            // list not empty
-            centerText = "Total Value\n" + totalValue + "\n(all slices)";
+        if (mDataHeaders == null || rightIndex < 0) {
+            mChart.setCenterText("Add money debts in list mode.");
+            rangeBar.setVisibility(View.GONE);
         }
-        mChart.setCenterText(centerText);
+        else {
+            mChart.setCenterText("Total Value\n" + totalValue + "\n(all slices)");
+        }
         mChart.setData(data);
 
         // undo all highlights
