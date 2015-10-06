@@ -9,7 +9,6 @@ import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
@@ -29,9 +28,9 @@ public class Debt extends ParseObject {
     static final String KEY_TITLE = "title";
     static final String KEY_CURRENCY_POS = "currencyPos";
     static final String KEY_MONEY_AMOUNT = "money";
-    static final String KEY_OWNER = "owner";
+    static final String KEY_OWNER_NAME = "ownerName";
     static final String KEY_STATUS = "status";
-    static final String KEY_PHONE = "phone";
+    static final String KEY_OWNER_PHONE = "ownerPhone";
     static final String KEY_TAB_TAG = "tabTag";
 
     static final int NON_MONEY_DEBT_CURRENCY = 0;
@@ -97,15 +96,15 @@ public class Debt extends ParseObject {
         }
     }
 
-    String getOwner() {
-        return getString(KEY_OWNER);
+    String getOwnerName() {
+        return getString(KEY_OWNER_NAME);
     }
 
-    void setOwner(String owner) {
-        if (owner != null && owner.length() > 0) {
-            put(KEY_OWNER, owner.trim());
+    void setOwnerName(String ownerName) {
+        if (ownerName != null && ownerName.length() > 0) {
+            put(KEY_OWNER_NAME, ownerName.trim());
         } else {
-            remove(KEY_OWNER);
+            remove(KEY_OWNER_NAME);
         }
     }
 
@@ -117,16 +116,16 @@ public class Debt extends ParseObject {
         put(KEY_STATUS, status);
     }
 
-    String getPhone() {
-        return getString(KEY_PHONE);
+    String getOwnerPhone() {
+        return getString(KEY_OWNER_PHONE);
     }
 
-    void setPhone(String phone, String userCountry) {
-        if (phone != null && phone.length() > 0) {
+    void setOwnerPhone(String ownerPhone, String userCountry) {
+        if (ownerPhone != null && ownerPhone.length() > 0) {
             // Format phone number to E164 standard to use it as a unique identifier
-            put(KEY_PHONE, formatToE164(phone, userCountry).trim());
+            put(KEY_OWNER_PHONE, formatToE164(ownerPhone, userCountry).trim());
         } else {
-            remove(KEY_PHONE);
+            remove(KEY_OWNER_PHONE);
         }
     }
 

@@ -17,8 +17,11 @@ import android.provider.ContactsContract;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.TelephonyManager;
+import android.text.Editable;
+import android.text.InputType;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.TextWatcher;
 import android.text.format.DateFormat;
 import android.text.style.ImageSpan;
 import android.util.Log;
@@ -61,7 +64,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Choosing debt details. Used both for new and for existing cc
+ * Choosing debt details. Used both for new and for existing debts.
  */
 public class EditDebtActivity extends AppCompatActivity {
 
@@ -76,7 +79,6 @@ public class EditDebtActivity extends AppCompatActivity {
     private EditText debtOwnerText;
     private EditText debtPhoneText;
     private EditText debtDescText;
-    private MenuItem searchViewMenuItem;
     private SearchView searchView;
     private AutoCompleteTextView searchAutoComplete;
     private ImageView closeBtn;
@@ -91,7 +93,6 @@ public class EditDebtActivity extends AppCompatActivity {
 
     private Debt beforeChange;
     private int currencyPos;
-    private MenuItem deleteMenuItem;
 
 
     //**********************************************************************************************
@@ -125,46 +126,50 @@ public class EditDebtActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
-                SlideDateTimeListener listener = new SlideDateTimeListener() {
-
-                    @SuppressWarnings("deprecation")
-                    @Override
-                    public void onDateTimeSet(Date date) {
-                        date.setSeconds(0);
-                        remindButton.setText(DateFormat.format("MM/dd/yy h:mmaa", date.getTime()));
-                        remindCheckBox.setChecked(true);
-                        debt.setDueDate(date);
-                    }
-
-                    @Override
-                    public void onDateTimeCancel() {
-
-                    }
-                };
-                Date now = new Date();
-                Date prevDate = debt.getDueDate();
-                Date initDate;
-                if (prevDate != null && now.before(prevDate)) {
-                    // future scheduled date already exists
-                    initDate = prevDate;
-                } else {
-                    initDate = now;
-                }
-                new SlideDateTimePicker.Builder(getSupportFragmentManager())
-                        .setListener(listener)
-                        .setInitialDate(initDate)
-                        .setIndicatorColor(getResources().getColor(R.color.accent))
-                        .build()
-                        .show();
+                showDateTimePicker();
             }
         });
+    }
+
+    private void showDateTimePicker() {
+        SlideDateTimeListener listener = new SlideDateTimeListener() {
+
+            @SuppressWarnings("deprecation")
+            @Override
+            public void onDateTimeSet(Date date) {
+                date.setSeconds(0);
+                remindButton.setText(DateFormat.format("MM/dd/yy h:mmaa", date.getTime()));
+                remindCheckBox.setChecked(true);
+                debt.setDueDate(date);
+            }
+
+            @Override
+            public void onDateTimeCancel() {
+
+            }
+        };
+        Date now = new Date();
+        Date prevDate = debt.getDueDate();
+        Date initDate;
+        if (prevDate != null && now.before(prevDate)) {
+            // future scheduled date already exists
+            initDate = prevDate;
+        } else {
+            initDate = now;
+        }
+        new SlideDateTimePicker.Builder(getSupportFragmentManager())
+                .setListener(listener)
+                .setInitialDate(initDate)
+                .setIndicatorColor(getResources().getColor(R.color.accent_add))
+                .build()
+                .show();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.edit_debt, menu);
         setupSearch(menu);
-        deleteMenuItem = menu.findItem(R.id.action_delete);
+        MenuItem deleteMenuItem = menu.findItem(R.id.action_delete);
         if (isNew) {
             deleteMenuItem.setVisible(false);
         } else {
@@ -181,7 +186,7 @@ public class EditDebtActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case android.R.id.home:
                 setDebtFieldsAfterEditing();
-                if (isModified || isNew) {
+                if (isModified) {
                     (new AlertDialog.Builder(this))
                             .setMessage(R.string.save_changes_confirm)
                             .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
@@ -212,7 +217,9 @@ public class EditDebtActivity extends AppCompatActivity {
                         .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                sendPushResponse(debt.getOtherUuid(), Debt.STATUS_RETURNED);// TODO: 16/09/2015 move to "done" marking
+                                if (isExistingUser(debt.getOwnerPhone())) {
+                                    sendPushResponse(debt.getOtherUuid(), Debt.STATUS_RETURNED);// TODO: 16/09/2015 move to "done" marking
+                                }
                                 cancelAlarm(debt);
                                 // The debt will be deleted eventually but will immediately be excluded from mQuery results.
                                 debt.deleteEventually();
@@ -228,7 +235,7 @@ public class EditDebtActivity extends AppCompatActivity {
                     break;
                 }
                 setDebtFieldsAfterEditing();
-                if ((isNew || isModified)&&isExistingUser(debt.getPhone())) {
+                if ((isNew || isModified) && isExistingUser(debt.getOwnerPhone())) {
                     if (pushCheckBox.isChecked()) {// TODO: 24/09/2015 settings
                         sendPushToOwner();// TODO: 9/30/2015  auto receive push if modified (update existing)
                     }
@@ -244,14 +251,17 @@ public class EditDebtActivity extends AppCompatActivity {
     }
 
     private boolean isExistingUser(String phone) {
+        if (phone == null) {
+            return false;
+        }
         ParseQuery<ParseUser> query = ParseUser.getQuery();
         query.whereEqualTo("phone", phone);
         try {
-            List<ParseUser> users = query.find();
+            ParseUser owner = query.getFirst();
+            return true;
         } catch (ParseException e) {
             return false;
         }
-        return false;
     }
 
     /**
@@ -260,7 +270,7 @@ public class EditDebtActivity extends AppCompatActivity {
     private void revertChangesAndCancel() {
         if (!isNew) {
             debt.copyFrom(beforeChange); // TODO: 9/30/2015 check if needed
-        }
+        } // otherwise, changes are not saved anyway
         cancelActivity();
     }
 
@@ -278,7 +288,7 @@ public class EditDebtActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         setDebtFieldsAfterEditing();
-        if (isModified || isNew) {
+        if (isModified) {
             (new AlertDialog.Builder(this))
                     .setMessage(R.string.save_changes_confirm)
                     .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
@@ -378,27 +388,25 @@ public class EditDebtActivity extends AppCompatActivity {
      */
     private void setDebtFieldsAfterEditing() {
         debt.setTitle(debtTitleText.getText().toString());
-        debt.setCurrencyPos(currencyPos);
-        debt.setMoneyAmountByTitle();
-        setTitleFormattedAsMoneyAmount(currencyPos);
-        debt.setOwner(debtOwnerText.getText().toString());
-        debt.setPhone(debtPhoneText.getText().toString(), getUserCountry(EditDebtActivity.this));
+        debt.setOwnerName(debtOwnerText.getText().toString());
+        debt.setOwnerPhone(debtPhoneText.getText().toString(), getUserCountry(EditDebtActivity.this));
         debt.setDescription(debtDescText.getText().toString());
         if (!remindCheckBox.isChecked()) {
             // In case the date was already set by the dialog
             debt.setDueDate(null);
         }
-        debt.setDraft(true);
-        debt.setStatus(Debt.STATUS_CREATED);
+
+        isModified = !debt.equals(beforeChange);
+
         ParseUser currUser = ParseUser.getCurrentUser();
         debt.setAuthor(currUser);
         debt.setAuthorName(currUser.getString("name"));
         debt.setAuthorPhone(currUser.getString("phone"));
-        if (debt.equals(beforeChange)) {
-            isModified = false;
-        } else {
-            isModified = true;// TODO: 19/09/2015 exclude last checkboxes
-        }
+        debt.setStatus(Debt.STATUS_CREATED);
+        debt.setCurrencyPos(currencyPos);// TODO: 06/10/2015 include in changes detection
+        debt.setMoneyAmountByTitle();
+        setTitleFormattedAsMoneyAmount(currencyPos);
+        debt.setDraft(true);
     }
 
     /**
@@ -448,12 +456,11 @@ public class EditDebtActivity extends AppCompatActivity {
         ParseQuery<Debt> query = Debt.getQuery();
         query.fromLocalDatastore();
         query.whereEqualTo(Debt.KEY_UUID, debtId);
-        Debt object = query.getFirst();
-        debt = object;
+        debt = query.getFirst();
         debtTitleText.setText(debt.getTitle());
         spinner1.setSelection(debt.getCurrencyPos());
-        debtOwnerText.setText(debt.getOwner());
-        debtPhoneText.setText(debt.getPhone());
+        debtOwnerText.setText(debt.getOwnerName());
+        debtPhoneText.setText(debt.getOwnerPhone());
         debtDescText.setText(debt.getDescription());
         Date dueDate = debt.getDueDate();
         if (dueDate != null) {
@@ -487,9 +494,6 @@ public class EditDebtActivity extends AppCompatActivity {
             remindButton.setText(DateFormat.format("MM/dd/yy h:mmaa", dueDate.getTime()));
             remindCheckBox.setChecked(true);
         }
-        // REMOVE: 23/09/2015
-        ParseUser author = other.getAuthor();
-        System.out.println("Other id *******************************************************************" + author.getObjectId());
     }
 
     /**
@@ -529,14 +533,14 @@ public class EditDebtActivity extends AppCompatActivity {
             return;
         }
         ParsePush push = new ParsePush();
-        String phone = debt.getPhone();
+        String phone = debt.getOwnerPhone();
         if (phone == null) {
             return;
         }
-        push.setChannel(MainActivity.USER_CHANNEL_PREFIX + debt.getPhone().replaceAll("[^0-9]+", ""));
-        Gson gson = new Gson(); // Or use new GsonBuilder().create();
+        push.setChannel(MainActivity.USER_CHANNEL_PREFIX + debt.getOwnerPhone().replaceAll("[^0-9]+", ""));
+        // TODO: 06/10/2015  Gson gson = new Gson(); // Or use new GsonBuilder().create(); /*gson.toJson(o)*/
         // TODO: 14/09/2015 use proxy (add image, date): https://gist.github.com/janakagamini/f5c63ea27bee8b7b7581
-        push.setMessage(status + "+" + debt.getUuidString() + "+" + otherUuid/*gson.toJson(o)*/);///**/);
+        push.setMessage(status + "+" + debt.getUuidString() + "+" + otherUuid);
         push.sendInBackground(new SendCallback() {
             @Override
             public void done(ParseException e) {
@@ -546,15 +550,11 @@ public class EditDebtActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(),
                             "Push not sent: " + e.getMessage(),
                             Toast.LENGTH_LONG).show();// REMOVE: 15/09/2015
-
                 }
             }
         });
     }
 
-    /**
-     * Show a confirmation push notification dialog, with an option to call the owner.
-     */
     private void showActionsDialog() {
         int title;
         if (isNew) {
@@ -570,7 +570,7 @@ public class EditDebtActivity extends AppCompatActivity {
         }
         String[] strArray = getResources().getStringArray(array);
         for (int i = 0; i < strArray.length; i++) {
-            strArray[i] += " " + debt.getOwner();
+            strArray[i] += " " + debt.getOwnerName();
         }
         (new AlertDialog.Builder(EditDebtActivity.this))
                 .setTitle(title)
@@ -581,11 +581,11 @@ public class EditDebtActivity extends AppCompatActivity {
                                 openConversationByPhone();
                                 break;
                             case DebtListAdapter.ACTION_CALL:
-                                Intent dial = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + debt.getPhone()));
+                                Intent dial = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + debt.getOwnerPhone()));
                                 startActivity(dial);
                                 break;
                             case DebtListAdapter.ACTION_SMS:
-                                Intent sms = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", debt.getPhone(), null));
+                                Intent sms = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", debt.getOwnerPhone(), null));
                                 startActivity(sms);
                                 break;
 
@@ -632,7 +632,7 @@ public class EditDebtActivity extends AppCompatActivity {
     private void sendPushToOwner() {
         // TODO: 14/09/2015 send only if data was changed
         ParsePush push = new ParsePush();
-        String phone = debt.getPhone();
+        String phone = debt.getOwnerPhone();
         if (phone == null) {
             return;
         }
@@ -713,6 +713,25 @@ public class EditDebtActivity extends AppCompatActivity {
         debtOwnerText.setOnEditorActionListener(focusNextEmptyListener);
         debtPhoneText = (EditText) findViewById(R.id.debt_phone);
         debtPhoneText.setOnEditorActionListener(focusNextEmptyListener);
+        debtPhoneText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (s != null&& s.toString().length() > 0) {
+                    pushCheckBox.setVisibility(View.VISIBLE);
+                }
+                else {
+                    pushCheckBox.setVisibility(View.GONE);
+                }
+            }
+        });
         debtDescText = (EditText) findViewById(R.id.debt_desc);
         remindButton = (Button) findViewById(R.id.remind_button);
         remindCheckBox = (CheckBox) findViewById(R.id.remind_checkbox);
@@ -722,11 +741,15 @@ public class EditDebtActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 currencyPos = position;
+                if (position != Debt.NON_MONEY_DEBT_CURRENCY) {
+                    debtTitleText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+                } else {
+                    debtTitleText.setInputType(InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+                }
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-
             }
         });
     }
@@ -826,7 +849,7 @@ public class EditDebtActivity extends AppCompatActivity {
     private void setupSearch(Menu menu) {
         SearchManager searchManager =
                 (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        searchViewMenuItem = menu.findItem(R.id.search);
+        MenuItem searchViewMenuItem = menu.findItem(R.id.search);
         searchView = (SearchView) searchViewMenuItem.getActionView();
         setSearchTextColors();
         searchView.setSearchableInfo(
@@ -997,8 +1020,8 @@ public class EditDebtActivity extends AppCompatActivity {
         int alarmId = schemeSpecificPart.hashCode();
 
         alertIntent.putExtra(Debt.KEY_TITLE, debt.getTitle());
-        alertIntent.putExtra(Debt.KEY_OWNER, debt.getOwner());
-        alertIntent.putExtra(Debt.KEY_PHONE, debt.getPhone());
+        alertIntent.putExtra(Debt.KEY_OWNER_NAME, debt.getOwnerName());
+        alertIntent.putExtra(Debt.KEY_OWNER_PHONE, debt.getOwnerPhone());
         alertIntent.putExtra(Debt.KEY_TAB_TAG, debt.getTabTag());
 
         alertIntent.setData(Uri.parse(ALARM_SCHEME + schemeSpecificPart));

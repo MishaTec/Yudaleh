@@ -13,22 +13,28 @@
         android:paddingBottom="30dp">
 
 
-        <EditText
-            android:id="@+id/debt_title"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/debt_title_hint"
-            android:inputType="textCapSentences"
-            android:nextFocusDown="@+id/debt_owner"
-            android:paddingTop="30dp" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-        <Spinner
-            android:id="@+id/spinner1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:entries="@array/country_arrays"
-            android:prompt="@string/country_prompt"
-            android:spinnerMode="dropdown" />
+            <EditText
+                android:id="@+id/debt_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/debt_title_hint"
+                android:inputType="textCapSentences"
+                android:nextFocusDown="@+id/debt_owner"
+                android:paddingTop="30dp"
+                android:layout_weight="1" />
+
+            <Spinner
+                android:id="@+id/spinner1"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:entries="@array/country_arrays"
+                android:spinnerMode="dropdown" />
+        </LinearLayout>
 
         <EditText
             android:id="@+id/debt_owner"
@@ -86,6 +92,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true"
+            android:visibility="gone"
             android:text="@string/push_checkbox_text" />
 
     </LinearLayout>

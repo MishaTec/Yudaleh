@@ -14,8 +14,8 @@
 		</ul>
 		For logged in users: <br/>
 		<ul>
-			<li>Syncronize debt with the owner</li>
-			<li>Char with the owner</li>
+			<li>Synchronize debt with the owner</li>
+			<li>Chat with the owner</li>
 			<li>All the data is synced to cloud</li>
 		</ul>  
     ]]></string>
@@ -23,18 +23,10 @@
     <string name="no_title_error">Title is required</string>
     <string name="no_owner_error">Owner\'s name is required</string>
 
-    <string name="country_prompt">Choose a country</string>
-
     <string-array name="country_arrays">
-        <item>(Not money)</item>
+        <item>(item)</item>
         <item>NIS</item>
         <item>$</item>
-        <item>EURO</item>
-        <item>France</item>
-        <item>Italy</item>
-        <item>Singapore</item>
-        <item>New Zealand</item>
-        <item>India</item>
     </string-array>
 
     <string name="contact_actions_dialog_title_action">Choose action</string>

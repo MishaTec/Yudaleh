@@ -1,38 +1,41 @@
 package com.yudaleh;
 
+import android.graphics.Color;
+
 /**
  * Created by Michael on 04/10/2015.
  */
 class Contact {
-    private String phone;
-    private String name;
+    private String ownerPhone;
+    private String ownerName;
     private double totalMoney;
+    private int color;
 
-    Contact(String phone, String name) {
-        this.phone = phone;
-        this.name = name;
+    Contact(String ownerPhone, String ownerName) {
+        this.ownerPhone = ownerPhone;
+        this.ownerName = ownerName;
     }
 
-    Contact(String phone, String name, double totalMoney) {
-        this.phone = phone;
-        this.name = name;
+    Contact(String ownerPhone, String ownerName, double totalMoney) {
+        this.ownerPhone = ownerPhone;
+        this.ownerName = ownerName;
         this.totalMoney = totalMoney;
     }
 
-    String getPhone() {
-        return phone;
+    String getOwnerPhone() {
+        return ownerPhone;
     }
 
-    void setPhone(String phone) {
-        this.phone = phone;
+    void setOwnerPhone(String ownerPhone) {
+        this.ownerPhone = ownerPhone;
     }
 
-    String getName() {
-        return name;
+    String getOwnerName() {
+        return ownerName;
     }
 
-    void setName(String name) {
-        this.name = name;
+    void setOwnerName(String ownerName) {
+        this.ownerName = ownerName;
     }
 
     double getTotalMoney() {
@@ -52,12 +55,20 @@ class Contact {
             return false;
         }
         Contact other = (Contact) o;
-        return EqualsUtil.areEqual(phone, other.phone)
-                && EqualsUtil.areEqual(name, other.name)
+        return EqualsUtil.areEqual(ownerPhone, other.ownerPhone)
+                && EqualsUtil.areEqual(ownerName, other.ownerName)
                 && EqualsUtil.areEqual(totalMoney, other.totalMoney);
     }
 
     String getMapKey() {
-        return phone != null ? phone : name;
+        return ownerPhone != null ? ownerPhone : ownerName;
+    }
+
+    public void setColor(int color) {
+        this.color = color;
+    }
+
+    public int getColor() {
+        return color;
     }
 }

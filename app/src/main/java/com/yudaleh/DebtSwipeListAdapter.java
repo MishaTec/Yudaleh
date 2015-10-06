@@ -4,12 +4,10 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
-import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,10 +22,8 @@ import com.github.jjobes.slidedatetimepicker.SlideDateTimePicker;
 import com.parse.FindCallback;
 import com.parse.ParseAnonymousUtils;
 import com.parse.ParseQuery;
-import com.parse.ParseQueryAdapter;
 import com.parse.ParseUser;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -98,7 +94,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
         });
 
         // Action 2:
-        if (debt.getPhone() != null) {
+        if (debt.getOwnerPhone() != null) {
             holder.action2.setText(R.string.action2_text_with_phone);
             holder.action2.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -120,34 +116,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
         holder.action3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SlideDateTimeListener listener = new SlideDateTimeListener() {
-
-                    @SuppressWarnings("deprecation")
-                    @Override
-                    public void onDateTimeSet(Date date) {
-                        date.setSeconds(0);
-                        debt.setDueDate(date);
-                    }
-
-                    @Override
-                    public void onDateTimeCancel() {
-
-                    }
-                };
-                Date now = new Date();
-                Date prevDate = debt.getDueDate();
-                Date initDate;
-                if (prevDate != null && now.before(prevDate)) {
-                    // future scheduled date already exists
-                    initDate = prevDate;
-                } else {
-                    initDate = now;
-                }
-                new SlideDateTimePicker.Builder(((AppCompatActivity) mContext).getSupportFragmentManager())
-                        .setListener(listener)
-                        .setInitialDate(initDate)
-                        .build()
-                        .show();
+showDataTimePicker(debt);
             }
         });
 
@@ -187,8 +156,40 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
 
         }
 
-        debtDescription.setText(debt.getOwner());
+        debtDescription.setText(debt.getOwnerName());
         return view;
+    }
+
+    private void showDataTimePicker(final Debt debt) {
+        SlideDateTimeListener listener = new SlideDateTimeListener() {
+
+            @SuppressWarnings("deprecation")
+            @Override
+            public void onDateTimeSet(Date date) {
+                date.setSeconds(0);
+                debt.setDueDate(date);
+            }
+
+            @Override
+            public void onDateTimeCancel() {
+
+            }
+        };
+        Date now = new Date();
+        Date prevDate = debt.getDueDate();
+        Date initDate;
+        if (prevDate != null && now.before(prevDate)) {
+            // future scheduled date already exists
+            initDate = prevDate;
+        } else {
+            initDate = now;
+        }
+        new SlideDateTimePicker.Builder(((AppCompatActivity) mContext).getSupportFragmentManager())
+                .setListener(listener)
+                .setInitialDate(initDate)
+                .setIndicatorColor(mContext.getResources().getColor(R.color.accent_add))
+                .build()
+                .show();
     }
 
     /**
@@ -210,11 +211,11 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
                                 openConversationByPhone(debt);
                                 break;
                             case ACTION_CALL:
-                                Intent dial = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + debt.getPhone()));
+                                Intent dial = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + debt.getOwnerPhone()));
                                 mContext.startActivity(dial);
                                 break;
                             case ACTION_SMS:
-                                Intent sms = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", debt.getPhone(), null));
+                                Intent sms = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", debt.getOwnerPhone(), null));
                                 mContext.startActivity(sms);
                                 break;
 

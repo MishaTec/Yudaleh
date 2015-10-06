@@ -20,8 +20,8 @@ public class DueDateAlarm extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String uuid = intent.getData().getSchemeSpecificPart();
         String title = intent.getStringExtra(Debt.KEY_TITLE);
-        String owner = intent.getStringExtra(Debt.KEY_OWNER);
-        String phone = intent.getStringExtra(Debt.KEY_PHONE);
+        String owner = intent.getStringExtra(Debt.KEY_OWNER_NAME);
+        String phone = intent.getStringExtra(Debt.KEY_OWNER_PHONE);
         String tabTag = intent.getStringExtra(Debt.KEY_TAB_TAG);
 
         String firstPart;

@@ -652,7 +652,7 @@ public class MainActivity extends AppCompatActivity {
         int alarmId = schemeSpecificPart.hashCode();
 
         alertIntent.putExtra(Debt.KEY_TITLE, debt.getTitle());
-        alertIntent.putExtra(Debt.KEY_OWNER, debt.getOwner());
+        alertIntent.putExtra(Debt.KEY_OWNER_NAME, debt.getOwnerName());
         alertIntent.putExtra(Debt.KEY_TAB_TAG, debt.getTabTag());
 
         alertIntent.setData(Uri.parse(ALARM_SCHEME + schemeSpecificPart));

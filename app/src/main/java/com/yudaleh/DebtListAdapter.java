@@ -2,6 +2,7 @@ package com.yudaleh;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
@@ -98,8 +99,8 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
         Contact owner = (Contact) getGroup(groupPosition);
-        String phone = owner.getPhone();
-        String name = owner.getName();
+        String phone = owner.getOwnerPhone();
+        String name = owner.getOwnerName();
 
         if (convertView == null) {
             LayoutInflater infalInflater = (LayoutInflater) mContext
@@ -108,7 +109,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         }
 
         String headerTitle = name;
-        if (phone!=null && mOwnerNamesCount.get(name) > 1) {
+        if (phone != null && mOwnerNamesCount.get(name) > 1) {
             headerTitle += " (" + phone + ")";
         }
         // TODO: 05/10/2015 unique identifier for not merged non-money debts
@@ -119,7 +120,9 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         lblListHeader.setText(headerTitle);
 
         if (owner.getTotalMoney() > 0) {
-            convertView.setBackgroundColor(mColors.get(groupPosition % mColors.size()));
+            convertView.setBackgroundColor(owner.getColor());
+        } else {
+            convertView.setBackgroundColor(Color.LTGRAY);
         }
         return convertView;
     }
@@ -243,40 +246,40 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         mDataHeaders = new ArrayList<>();
 
         for (Debt debt : debts) {
-            String phone = debt.getPhone();
-            String name = debt.getOwner();
-            Contact contact  = new Contact(phone, name);
+            String phone = debt.getOwnerPhone();
+            String name = debt.getOwnerName();
+            Contact contact = new Contact(phone, name);
             String key = contact.getMapKey();
 
             // TODO: 03/10/2015 update existing adapters
             ArrayList<Debt> singleItemList = new ArrayList<>();
             singleItemList.add(debt);
             ArrayAdapter<Debt> swipeAdapter = new DebtSwipeListAdapter(mContext, R.layout.list_item, singleItemList);
-                if (!mDataChildren.containsKey(key)) {
-                    List<Debt> debtItems = new ArrayList<>();
-                    debtItems.add(debt);
-                    mDataChildren.put(key, debtItems);
+            if (!mDataChildren.containsKey(key)) {
+                List<Debt> debtItems = new ArrayList<>();
+                debtItems.add(debt);
+                mDataChildren.put(key, debtItems);
 
-                    List<ArrayAdapter<Debt>> debtAdapters = new ArrayList<>();
-                    debtAdapters.add(swipeAdapter);
-                    mChildrenAdapters.put(key, debtAdapters);
+                List<ArrayAdapter<Debt>> debtAdapters = new ArrayList<>();
+                debtAdapters.add(swipeAdapter);
+                mChildrenAdapters.put(key, debtAdapters);
 
-                    mDataHeaders.add(contact);
-                } else {
-                    mDataChildren.get(key).add(debt);
-                    mChildrenAdapters.get(key).add(swipeAdapter);
-                }
+                mDataHeaders.add(contact);
+            } else {
+                mDataChildren.get(key).add(debt);
+                mChildrenAdapters.get(key).add(swipeAdapter);
+            }
 
             for (Contact c : mDataHeaders) {
                 c.setTotalMoney(countTotalMoney(c.getMapKey()));
             }
-            if (phone!=null) {
+            if (phone != null) {
                 if (!mOwnerNamesCount.containsKey(name)) {
                     mOwnerNamesCount.put(name, 1);
                 } else {
                     mOwnerNamesCount.put(name, mOwnerNamesCount.get(name) + 1);
                 }
-            }else{
+            } else {
                 if (!mOwnerNamesCountNoPhone.containsKey(name)) {
                     mOwnerNamesCountNoPhone.put(name, 1);
                 } else {
@@ -298,6 +301,14 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
                 }
             }
         });
+        int i = 0;
+        int numColors = mColors.size();
+        for (Contact contact : mDataHeaders) {
+            if (contact.getTotalMoney() > 0) {
+                contact.setColor(mColors.get(i % numColors));
+                i++;
+            }
+        }
     }
 
 
