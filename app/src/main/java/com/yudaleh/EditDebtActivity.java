@@ -250,14 +250,14 @@ public class EditDebtActivity extends AppCompatActivity {
         return false;
     }
 
-    private boolean isExistingUser(String phone) {
+    static boolean isExistingUser(String phone) {
         if (phone == null) {
             return false;
         }
         ParseQuery<ParseUser> query = ParseUser.getQuery();
         query.whereEqualTo("phone", phone);
         try {
-            ParseUser owner = query.getFirst();
+            query.getFirst();
             return true;
         } catch (ParseException e) {
             return false;

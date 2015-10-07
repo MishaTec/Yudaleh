@@ -452,6 +452,8 @@ public class MainActivity extends AppCompatActivity {
                     loadFromParse();
                 }
                 updateLoggedInInfo();// TODO: 05/09/2015 remove?
+                ActionBar actionBar = getSupportActionBar();
+                actionBar.selectTab(actionBar.getSelectedTab());
             }
         }
 

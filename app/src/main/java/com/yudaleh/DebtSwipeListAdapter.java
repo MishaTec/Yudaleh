@@ -50,7 +50,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
     private class ViewHolder {
         TextView debtTitle;
         public ImageView debtImage;
-        public TextView debtDescription;
+        public TextView debtSubtitle;
         public Button action1;
         public Button action2;
         public Button action3;
@@ -64,10 +64,10 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
         if (view == null) {
             view = LayoutInflater.from(mContext).inflate(mResource, parent, false);
             holder = new ViewHolder();
-            holder.debtImage = (ImageView) view.findViewById(R.id.example_row_iv_image);// TODO: 03/10/2015 rename
+            holder.debtImage = (ImageView) view.findViewById(R.id.debt_icon);// TODO: 03/10/2015 rename
             holder.debtTitle = (TextView) view
                     .findViewById(R.id.debt_title);
-            holder.debtDescription = (TextView) view.findViewById(R.id.example_row_tv_description);// TODO: 03/10/2015 rename
+            holder.debtSubtitle = (TextView) view.findViewById(R.id.debt_subtitle);// TODO: 03/10/2015 rename
             holder.action1 = (Button) view.findViewById(R.id.action_edit);
             holder.action2 = (Button) view.findViewById(R.id.action_message);
             holder.action3 = (Button) view.findViewById(R.id.action_call);
@@ -76,7 +76,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
             holder = (ViewHolder) view.getTag();
         }
         TextView debtTitle = holder.debtTitle;
-        TextView debtDescription = holder.debtDescription;
+        TextView debtSubtitle = holder.debtSubtitle;
         ImageView debtImage = holder.debtImage;
 
         if (debt.getCurrencyPos() != Debt.NON_MONEY_DEBT_CURRENCY) {
@@ -116,9 +116,10 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
         holder.action3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-showDataTimePicker(debt);
+//                showDataTimePicker(debt);
             }
         });
+        holder.action3.setVisibility(View.INVISIBLE);
 
         // TODO: 05/09/2015 remove info
 /*
@@ -156,7 +157,7 @@ showDataTimePicker(debt);
 
         }
 
-        debtDescription.setText(debt.getOwnerName());
+        debtSubtitle.setText(debt.getOwnerName());
         return view;
     }
 

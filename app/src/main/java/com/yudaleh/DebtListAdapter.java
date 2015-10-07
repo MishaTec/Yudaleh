@@ -4,14 +4,23 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.ExpandableListAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
+import com.fortysevendeg.swipelistview.BaseSwipeListViewListener;
 import com.fortysevendeg.swipelistview.SwipeListView;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.parse.ParseQueryAdapter;
@@ -134,7 +143,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
     }
 
     @Override
-    public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View view, ViewGroup parent) {
+    public View getChildView(final int groupPosition, int childPosition, boolean isLastChild, View view, ViewGroup parent) {
         // FIXME: 03/10/2015 called too many times
         ViewHolder holder;
         if (view == null) {
@@ -145,15 +154,94 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         } else {
             holder = (ViewHolder) view.getTag();
         }
-        SwipeListView childList = holder.childList;
-        SettingsManager settings = SettingsManager.getInstance();// TODO: 04/10/2015 fix on best settings
-        childList.setSwipeMode(settings.getSwipeMode());
-        childList.setSwipeActionLeft(settings.getSwipeActionLeft());
-        childList.setSwipeActionRight(settings.getSwipeActionRight());
-        childList.setOffsetLeft(convertDpToPixel(settings.getSwipeOffsetLeft()));
-        childList.setOffsetRight(convertDpToPixel(settings.getSwipeOffsetRight()));
-        childList.setAnimationTime(settings.getSwipeAnimationTime());
-        childList.setSwipeOpenOnLongPress(settings.isSwipeOpenOnLongPress());
+        final SwipeListView swipeListView = holder.childList;
+        swipeListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            swipeListView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
+
+                @Override
+                public void onItemCheckedStateChanged(ActionMode mode, int position,
+                                                      long id, boolean checked) {
+                    mode.setTitle("Selected (" + swipeListView.getCountSelected() + ")");
+                }
+
+                @Override
+                public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                    switch (item.getItemId()) {
+                        case R.id.menu_delete:
+                            swipeListView.dismissSelected();
+                            mode.finish();
+                            return true;
+                        default:
+                            return false;
+                    }
+                }
+
+                @Override
+                public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                    MenuInflater inflater = mode.getMenuInflater();
+                    inflater.inflate(R.menu.menu_choice_items, menu);
+                    return true;
+                }
+
+                @Override
+                public void onDestroyActionMode(ActionMode mode) {
+                    swipeListView.unselectedChoiceStates();
+                }
+
+                @Override
+                public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                    return false;
+                }
+            });
+        }
+
+        swipeListView.setSwipeListViewListener(new BaseSwipeListViewListener() {
+            @Override
+            public void onOpened(int position, boolean toRight) {
+            }
+
+            @Override
+            public void onClosed(int position, boolean fromRight) {
+            }
+
+            @Override
+            public void onListChanged() {
+            }
+
+            @Override
+            public void onMove(int position, float x) {
+            }
+
+            @Override
+            public void onStartOpen(int position, int action, boolean right) {
+                Log.d("swipe", String.format("onStartOpen %d - action %d", position, action));
+            }
+
+            @Override
+            public void onStartClose(int position, boolean right) {
+                Log.d("swipe", String.format("onStartClose %d", position));
+            }
+
+            @Override
+            public void onClickFrontView(int position) {
+                Log.d("swipe", String.format("onClickFrontView %d", position));
+            }
+
+            @Override
+            public void onClickBackView(int position) {
+                Log.d("swipe", String.format("onClickBackView %d", position));
+            }
+
+            @Override
+            public void onDismiss(int[] reverseSortedPositions) {
+                for (int position : reverseSortedPositions) {
+                    System.out.println("dismiss: "+groupPosition+", "+position);
+                }
+                adapter.notifyDataSetChanged();
+            }
+
+        });
         holder.childList.setAdapter(getAdapter(groupPosition, childPosition));
 
         return view;
@@ -166,7 +254,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
 
     @Override
     public boolean isChildSelectable(int groupPosition, int childPosition) {
-        return true;
+        return false;
     }
 
     @Override

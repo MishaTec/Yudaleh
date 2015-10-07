@@ -39,7 +39,7 @@
         android:tag="front">
 
         <ImageView
-            android:id="@+id/example_row_iv_image"
+            android:id="@+id/debt_icon"
             style="@style/ListImage"
             android:contentDescription="@string/debt_icon_desc" />
 
@@ -48,17 +48,17 @@
             style="@style/ListTitle"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_toRightOf="@id/example_row_iv_image"
-            android:layout_toEndOf="@id/example_row_iv_image" />
+            android:layout_toRightOf="@id/debt_icon"
+            android:layout_toEndOf="@id/debt_icon" />
 
         <TextView
-            android:id="@+id/example_row_tv_description"
+            android:id="@+id/debt_subtitle"
             style="@style/ListDescription"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/debt_title"
-            android:layout_toRightOf="@id/example_row_iv_image"
-            android:layout_toEndOf="@id/example_row_iv_image" />
+            android:layout_toRightOf="@id/debt_icon"
+            android:layout_toEndOf="@id/debt_icon" />
 
     </RelativeLayout>
 

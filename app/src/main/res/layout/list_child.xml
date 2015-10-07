@@ -17,6 +17,10 @@
         swipe:swipeDrawableChecked="@drawable/choice_selected"
         swipe:swipeDrawableUnchecked="@drawable/choice_unselected"
         swipe:swipeFrontView="@+id/front"
-        swipe:swipeMode="both"/>
+        swipe:swipeMode="both"
+        swipe:swipeOffsetRight="74dp"
+        swipe:swipeActionLeft="choice"
+        swipe:swipeActionRight="reveal"
+        swipe:swipeOpenOnLongPress="false"/>
 
 </FrameLayout>

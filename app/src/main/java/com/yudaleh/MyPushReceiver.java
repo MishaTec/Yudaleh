@@ -67,7 +67,7 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
                 }
                 debt = object;
                 String alert = "Friend's debt created";
-                if (isResponsePush) {
+                if (isResponsePush) { //remove notification
                     alert = "confirmed";
                     debt.setStatus(debtStatus);// TODO: 16/09/2015 save
                     debt.setOtherUuid(debtOtherId);// TODO: 16/09/2015 save
