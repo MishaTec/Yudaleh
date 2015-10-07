@@ -45,6 +45,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
     private final ArrayList<Integer> mColors;
     private HashMap<String, List<ArrayAdapter<Debt>>> mChildrenAdapters;
     private List<Contact> mDataHeaders;
+    private List<Debt> mSelectedData;
     private HashMap<String, Integer> mOwnerNamesCount;
     private HashMap<String, Integer> mOwnerNamesCountNoPhone;
     private HashMap<String, List<Debt>> mDataChildren;
@@ -143,7 +144,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
     }
 
     @Override
-    public View getChildView(final int groupPosition, int childPosition, boolean isLastChild, View view, ViewGroup parent) {
+    public View getChildView(final int groupPosition, final int childPosition, boolean isLastChild, View view, ViewGroup parent) {
         // FIXME: 03/10/2015 called too many times
         ViewHolder holder;
         if (view == null) {
@@ -155,48 +156,24 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
             holder = (ViewHolder) view.getTag();
         }
         final SwipeListView swipeListView = holder.childList;
-        swipeListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            swipeListView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
-
-                @Override
-                public void onItemCheckedStateChanged(ActionMode mode, int position,
-                                                      long id, boolean checked) {
-                    mode.setTitle("Selected (" + swipeListView.getCountSelected() + ")");
-                }
-
-                @Override
-                public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-                    switch (item.getItemId()) {
-                        case R.id.menu_delete:
-                            swipeListView.dismissSelected();
-                            mode.finish();
-                            return true;
-                        default:
-                            return false;
-                    }
-                }
-
-                @Override
-                public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                    MenuInflater inflater = mode.getMenuInflater();
-                    inflater.inflate(R.menu.menu_choice_items, menu);
-                    return true;
-                }
-
-                @Override
-                public void onDestroyActionMode(ActionMode mode) {
-                    swipeListView.unselectedChoiceStates();
-                }
-
-                @Override
-                public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                    return false;
-                }
-            });
-        }
-
+//        swipeListView.color(mColors.get(0));
         swipeListView.setSwipeListViewListener(new BaseSwipeListViewListener() {
+
+            @Override
+            public void onChoiceChanged(int position, boolean selected) {
+/*                Debt debt = (Debt) getChild(groupPosition, childPosition);
+                if (selected) {
+                    swipeListView.dispatchSetSelected(true);
+                    swipeListView.setSelection(position);
+                    swipeListView.setItemChecked(position, selected);
+                    mSelectedData.add(debt);
+                } else {
+                    swipeListView.dispatchSetSelected(false);
+                    mSelectedData.remove(debt);
+                }*/// TODO: 07/10/2015 make sure hidden items stay selected
+//                super.onChoiceChanged(position, selected);
+            }
+
             @Override
             public void onOpened(int position, boolean toRight) {
             }
@@ -236,15 +213,23 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
             @Override
             public void onDismiss(int[] reverseSortedPositions) {
                 for (int position : reverseSortedPositions) {
-                    System.out.println("dismiss: "+groupPosition+", "+position);
+//                    System.out.println("dismiss: " + groupPosition + ", " + position);// REMOVE: 07/10/2015
                 }
-                adapter.notifyDataSetChanged();
+//                adapter.notifyDataSetChanged();
             }
 
         });
         holder.childList.setAdapter(getAdapter(groupPosition, childPosition));
 
         return view;
+    }
+
+    private int getCountSelected() {
+        return mSelectedData.size();
+    }
+
+    private void dismissSelected() {
+        // TODO: 07/10/2015
     }
 
 
@@ -305,6 +290,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
 
         // Init data to prevent NullPointerException
         mDataHeaders = new ArrayList<>();
+        mSelectedData = new ArrayList<>();
         mDataChildren = new HashMap<>();
         mChildrenAdapters = new HashMap<>();
         mOwnerNamesCount = new HashMap<>();
@@ -332,6 +318,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         mOwnerNamesCount = new HashMap<>();
         mOwnerNamesCountNoPhone = new HashMap<>();
         mDataHeaders = new ArrayList<>();
+        mSelectedData = new ArrayList<>();
 
         for (Debt debt : debts) {
             String phone = debt.getOwnerPhone();

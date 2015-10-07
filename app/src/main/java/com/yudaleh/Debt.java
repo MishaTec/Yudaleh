@@ -19,7 +19,7 @@ public class Debt extends ParseObject {
 
     static final String KEY_UUID = "uuid";
     static final String KEY_IS_DRAFT = "isDraft";
-    static final String KEY_AUTHOR = "author";
+//    static final String KEY_AUTHOR = "author";// REMOVE: 07/10/2015
     static final String KEY_AUTHOR_NAME = "authorName";
     static final String KEY_AUTHOR_PHONE = "authorPhone";
     static final String KEY_OTHER_UUID = "origUuid";
@@ -85,7 +85,7 @@ public class Debt extends ParseObject {
 
     public void setMoneyAmountByTitle() {
         String title = getTitle();
-        if (title == null) {
+        if (title == null || getCurrencyPos() == NON_MONEY_DEBT_CURRENCY) {
             setMoneyAmount(0);
         } else {
             try {
@@ -172,7 +172,7 @@ public class Debt extends ParseObject {
         }
     }
 
-    @Deprecated
+/*    @Deprecated
     ParseUser getAuthor() {
         return getParseUser(KEY_AUTHOR);
     }
@@ -183,7 +183,7 @@ public class Debt extends ParseObject {
         } else {
             remove(KEY_AUTHOR);
         }
-    }
+    }*/// REMOVE: 07/10/2015
 
     String getAuthorName() {
         return getString(KEY_AUTHOR_NAME);

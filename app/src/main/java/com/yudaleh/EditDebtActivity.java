@@ -68,7 +68,6 @@ import java.util.Locale;
  */
 public class EditDebtActivity extends AppCompatActivity {
 
-    static final String ALARM_SCHEME = "timer:";
     private static final int FLAG_FORCE_BACK_TO_MAIN = 0x00040000;
     private static final int FLAG_SET_ALARM = 0X00020000;
 
@@ -255,7 +254,7 @@ public class EditDebtActivity extends AppCompatActivity {
             return false;
         }
         ParseQuery<ParseUser> query = ParseUser.getQuery();
-        query.whereEqualTo("phone", phone);
+        query.whereEqualTo(MainActivity.PARSE_USER_PHONE_KEY, phone);
         try {
             query.getFirst();
             return true;
@@ -399,9 +398,9 @@ public class EditDebtActivity extends AppCompatActivity {
         isModified = !debt.equals(beforeChange);
 
         ParseUser currUser = ParseUser.getCurrentUser();
-        debt.setAuthor(currUser);
-        debt.setAuthorName(currUser.getString("name"));
-        debt.setAuthorPhone(currUser.getString("phone"));
+//        debt.setAuthor(currUser);// REMOVE: 07/10/2015
+        debt.setAuthorName(currUser.getString(MainActivity.PARSE_USER_NAME_KEY));
+        debt.setAuthorPhone(currUser.getString(MainActivity.PARSE_USER_PHONE_KEY));
         debt.setStatus(Debt.STATUS_CREATED);
         debt.setCurrencyPos(currencyPos);// TODO: 06/10/2015 include in changes detection
         debt.setMoneyAmountByTitle();
@@ -610,7 +609,7 @@ public class EditDebtActivity extends AppCompatActivity {
 
     public void openConversationByPhone() {
         ParseQuery<ParseUser> query = ParseUser.getQuery();
-        query.whereEqualTo("phone", debt.getAuthorPhone());
+        query.whereEqualTo(MainActivity.PARSE_USER_PHONE_KEY, debt.getAuthorPhone());
         query.findInBackground(new FindCallback<ParseUser>() {
             public void done(List<ParseUser> user, com.parse.ParseException e) {
                 if (e == null) {
@@ -1024,7 +1023,7 @@ public class EditDebtActivity extends AppCompatActivity {
         alertIntent.putExtra(Debt.KEY_OWNER_PHONE, debt.getOwnerPhone());
         alertIntent.putExtra(Debt.KEY_TAB_TAG, debt.getTabTag());
 
-        alertIntent.setData(Uri.parse(ALARM_SCHEME + schemeSpecificPart));
+        alertIntent.setData(Uri.parse(MainActivity.ALARM_SCHEME + schemeSpecificPart));
 
         AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
         am.set(AlarmManager.RTC_WAKEUP, timeInMillis, PendingIntent.getBroadcast(
@@ -1045,7 +1044,7 @@ public class EditDebtActivity extends AppCompatActivity {
         String schemeSpecificPart = debt.getUuidString();
         int alarmId = schemeSpecificPart.hashCode();
 
-        alertIntent.setData(Uri.parse(ALARM_SCHEME + schemeSpecificPart));
+        alertIntent.setData(Uri.parse(MainActivity.ALARM_SCHEME + schemeSpecificPart));
 
         AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
         am.cancel(PendingIntent.getBroadcast(this, alarmId, alertIntent, PendingIntent.FLAG_UPDATE_CURRENT));

@@ -21,6 +21,7 @@
         swipe:swipeOffsetRight="74dp"
         swipe:swipeActionLeft="choice"
         swipe:swipeActionRight="reveal"
-        swipe:swipeOpenOnLongPress="false"/>
+        swipe:swipeOpenOnLongPress="false"
+        android:choiceMode="singleChoice"/>
 
 </FrameLayout>

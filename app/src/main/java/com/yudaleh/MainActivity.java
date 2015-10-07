@@ -23,6 +23,7 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.parse.DeleteCallback;
 import com.parse.FindCallback;
 import com.parse.ParseAnonymousUtils;
 import com.parse.ParseException;
@@ -49,9 +50,11 @@ public class MainActivity extends AppCompatActivity {
     private static final int I_OWE_TAB_INDEX = 0;
     private static final int OWE_ME_TAB_INDEX = 1;
 
-    private static final String ALARM_SCHEME = "timer:";
+    static final String ALARM_SCHEME = "timer:";
 
     private static final boolean SHOW_LOGIN_ON_ERROR = true;
+    static final String PARSE_USER_NAME_KEY = "name";
+    static final String PARSE_USER_PHONE_KEY = "phone";
 
     private boolean _isShowLoginOnFail = false;
     private boolean _wasSignupShowen = false;
@@ -356,7 +359,7 @@ public class MainActivity extends AppCompatActivity {
                         isDirtyFixed = true;
                     }
                 }
-                String info = "\nphone : " + curr.getString("phone") + "\nuser: " + curr.getUsername() + "\nisAuth: " + isAuth + "\nisDataAvai: " + isDataAvai + "\nisNew: " + isNew + "\nisDirty: " + isDirty + (isDirtyFixed ? " (fixed)" : "") + "\nkeys: " + keys + "\ndirtyKey: " + dirtyKey + "\nnumDirty: " + numDirty + "\ntoken: " + token + "\nisLinked: " + isLinked + "\npinned: " + numPinned + "\nsaved: " + numSaved;
+                String info = "\nphone : " + curr.getString(PARSE_USER_PHONE_KEY) + "\nuser: " + curr.getUsername() + "\nisAuth: " + isAuth + "\nisDataAvai: " + isDataAvai + "\nisNew: " + isNew + "\nisDirty: " + isDirty + (isDirtyFixed ? " (fixed)" : "") + "\nkeys: " + keys + "\ndirtyKey: " + dirtyKey + "\nnumDirty: " + numDirty + "\ntoken: " + token + "\nisLinked: " + isLinked + "\npinned: " + numPinned + "\nsaved: " + numSaved;
 
 //                content.setText(Html.fromHtml(getString(R.string.about_body)));// UNCOMMENT: 14/09/2015
                 content.setText(info);// REMOVE: 14/09/2015
@@ -392,8 +395,13 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        ParseUser currUser = ParseUser.getCurrentUser();
+        if (ParseAnonymousUtils.isLinked(currUser)) {
+            numSaved = -3;
+            return;
+        }
         query = Debt.getQuery();
-        query.whereEqualTo("author", ParseUser.getCurrentUser());
+        query.whereEqualTo(Debt.KEY_AUTHOR_PHONE, currUser.getString(PARSE_USER_PHONE_KEY));
         query.findInBackground(new FindCallback<Debt>() {
             public void done(List<Debt> debts, ParseException e) {
                 if (debts != null) {
@@ -461,7 +469,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void subscribeToPush() {
         List<String> subscribedChannels = ParseInstallation.getCurrentInstallation().getList("channels");
-        String phone = ParseUser.getCurrentUser().getString("phone");
+        String phone = ParseUser.getCurrentUser().getString(PARSE_USER_PHONE_KEY);
         if (phone == null) {
             return;
         }
@@ -473,7 +481,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void unsubscribeFromPush() {
         List<String> subscribedChannels = ParseInstallation.getCurrentInstallation().getList("channels");
-        String phone = ParseUser.getCurrentUser().getString("phone");
+        String phone = ParseUser.getCurrentUser().getString(PARSE_USER_PHONE_KEY);
         if (phone == null) {
             return;
         }
@@ -502,9 +510,16 @@ public class MainActivity extends AppCompatActivity {
 //        if (oweMeViewFragmentWithTag != null) {
 //            oweMeViewFragmentWithTag.clearView();
 //        }
-        // Unpin all the current objects
-        ParseObject.unpinAllInBackground(DebtListApplication.DEBT_GROUP_NAME);
         cancelAllAlarmsOnPinnedObjects();// TODO: 09/09/2015 not only pinned ?
+        // Unpin all the current objects
+        ParseObject.unpinAllInBackground(DebtListApplication.DEBT_GROUP_NAME, new DeleteCallback() {
+            @Override
+            public void done(ParseException e) {
+                if (e != null) {
+                    Toast.makeText(MainActivity.this, "Failed to unpin: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            }
+        });
         // Update the logged in label info
         updateLoggedInInfo();
     }
@@ -531,7 +546,9 @@ public class MainActivity extends AppCompatActivity {
                                 // Set is draft flag to false before
                                 // syncing to Parse
                                 debt.setDraft(false);
-                                debt.saveInBackground(new SaveCallback() {// FIXME: 04/09/2015
+                                debt.setAuthorName(ParseUser.getCurrentUser().getString(PARSE_USER_NAME_KEY));
+                                debt.setAuthorPhone(ParseUser.getCurrentUser().getString(PARSE_USER_PHONE_KEY));
+                                debt.saveInBackground(new SaveCallback() {
 
                                     @Override
                                     public void done(ParseException e) {
@@ -600,8 +617,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadFromParse() {
+        ParseUser currUser = ParseUser.getCurrentUser();
+        if (ParseAnonymousUtils.isLinked(currUser)) {
+            return;
+        }
         ParseQuery<Debt> query = Debt.getQuery();
-        query.whereEqualTo("author", ParseUser.getCurrentUser());
+        query.whereEqualTo(Debt.KEY_AUTHOR_PHONE, currUser.getString(PARSE_USER_PHONE_KEY));
         query.findInBackground(new FindCallback<Debt>() {
             public void done(final List<Debt> debts, ParseException e) {
                 if (e == null) {
@@ -698,10 +719,10 @@ public class MainActivity extends AppCompatActivity {
         }
         if (!ParseAnonymousUtils.isLinked(ParseUser.getCurrentUser())) {
             ParseUser currentUser = ParseUser.getCurrentUser();
-            getSupportActionBar().setTitle(getString(R.string.logged_in,
-                    currentUser.getString("name")));
+            getSupportActionBar().setTitle(getString(R.string.logged_in_title,
+                    currentUser.getString(PARSE_USER_NAME_KEY)));
         } else {
-            getSupportActionBar().setTitle(getResources().getString(R.string.not_logged_in));
+            getSupportActionBar().setTitle(getResources().getString(R.string.not_logged_in_title));
         }
     }
 

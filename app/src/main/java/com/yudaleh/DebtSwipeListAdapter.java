@@ -235,12 +235,12 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
 
     public void openConversationByPhone(Debt debt) {
         ParseQuery<ParseUser> query = ParseUser.getQuery();
-        query.whereEqualTo("phone", debt.getAuthorPhone());
-        query.findInBackground(new FindCallback<ParseUser>() {
-            public void done(List<ParseUser> user, com.parse.ParseException e) {
+        query.whereEqualTo(MainActivity.PARSE_USER_PHONE_KEY, debt.getAuthorPhone());
+        query.findInBackground(new FindCallback<ParseUser>() {// TODO: 07/10/2015 getFirst
+            public void done(List<ParseUser> users, com.parse.ParseException e) {
                 if (e == null) {
                     Intent intent = new Intent(mContext, MessagingActivity.class);
-                    intent.putExtra("RECIPIENT_ID", user.get(0).getObjectId());
+                    intent.putExtra("RECIPIENT_ID", users.get(0).getObjectId());
                     mContext.startActivity(intent);
                 } else {
                     Toast.makeText(mContext,

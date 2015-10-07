@@ -29,6 +29,7 @@ public class ListViewFragment extends android.support.v4.app.Fragment {
     private ExpandableListView listView;
     private View mRoot;
     ParseQueryAdapter.QueryFactory<Debt> factory;
+    private FloatingActionButton fab;
 
     public ListViewFragment() {
         // Set up the Parse mQuery to use in the adapter
@@ -62,7 +63,7 @@ public class ListViewFragment extends android.support.v4.app.Fragment {
         // Attach the mQuery adapter to the view
         listView.setAdapter((ExpandableListAdapter) debtListAdapter);
 
-        FloatingActionButton fab = (FloatingActionButton) root.findViewById(R.id.fab);
+        fab = (FloatingActionButton) root.findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -93,6 +94,7 @@ public class ListViewFragment extends android.support.v4.app.Fragment {
 
     private void updateView() {
         debtListAdapter.update();
+        fab.show(false);
     }
 
     void clearView() {

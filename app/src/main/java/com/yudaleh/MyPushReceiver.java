@@ -146,7 +146,7 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
         String schemeSpecificPart = debt.getUuidString();
         int alarmId = schemeSpecificPart.hashCode();
 
-        alertIntent.setData(Uri.parse(EditDebtActivity.ALARM_SCHEME + schemeSpecificPart));
+        alertIntent.setData(Uri.parse(MainActivity.ALARM_SCHEME + schemeSpecificPart));
 
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         am.cancel(PendingIntent.getBroadcast(context, alarmId, alertIntent, PendingIntent.FLAG_UPDATE_CURRENT));
