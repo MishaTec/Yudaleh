@@ -6,18 +6,16 @@
     <string name="about">About</string>
     <string name="about_body"><![CDATA[
         Yudaleh - debt managing application.<br/>
+        <br/>
         Allows you to: <br/>
-		<ul>
-			<li>Easily edit and create new debts</li>
-			<li>Set reminders</li>
-			<li>View statistics in charts</li>
-		</ul>
+            Easily edit and create new debts,<br/>
+			Set reminders,<br/>
+			View statistics in charts.<br/>
+		<br/>
 		For logged in users: <br/>
-		<ul>
-			<li>Synchronize debt with the owner</li>
-			<li>Chat with the owner</li>
-			<li>All the data is synced to cloud</li>
-		</ul>  
+            Synchronize debt with the owner,<br/>
+			Chat with the owner,<br/>
+			All the data is synced to cloud.<br/>
     ]]></string>
 
     <string name="no_title_error">Title is required</string>

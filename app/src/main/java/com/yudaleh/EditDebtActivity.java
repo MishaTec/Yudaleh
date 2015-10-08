@@ -399,8 +399,10 @@ public class EditDebtActivity extends AppCompatActivity {
 
         ParseUser currUser = ParseUser.getCurrentUser();
 //        debt.setAuthor(currUser);// REMOVE: 07/10/2015
-        debt.setAuthorName(currUser.getString(MainActivity.PARSE_USER_NAME_KEY));
-        debt.setAuthorPhone(currUser.getString(MainActivity.PARSE_USER_PHONE_KEY));
+        if(currUser!=null) {
+            debt.setAuthorName(currUser.getString(MainActivity.PARSE_USER_NAME_KEY));
+            debt.setAuthorPhone(currUser.getString(MainActivity.PARSE_USER_PHONE_KEY));
+        }
         debt.setStatus(Debt.STATUS_CREATED);
         debt.setCurrencyPos(currencyPos);// TODO: 06/10/2015 include in changes detection
         debt.setMoneyAmountByTitle();
@@ -562,7 +564,8 @@ public class EditDebtActivity extends AppCompatActivity {
             title = R.string.contact_actions_dialog_title_modified_debt;
         }
         int array;
-        if (!ParseAnonymousUtils.isLinked(ParseUser.getCurrentUser())) {
+        ParseUser currUser = ParseUser.getCurrentUser();
+        if (currUser!=null) {
             array = R.array.contact_actions_array_logged_in;
         } else {
             array = R.array.contact_actions_array_logged_out;

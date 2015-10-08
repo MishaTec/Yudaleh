@@ -32,20 +32,16 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
 
     @Override
     public void onPushReceive(final Context context, Intent intent) {
-        JSONObject data;
         String alert = null;
         try {
-            data = new JSONObject(intent.getStringExtra(MyPushReceiver.KEY_PUSH_DATA));
-            if (data != null) {
-                alert = data.getString("alert");
-            }
+            alert = (new JSONObject(intent.getStringExtra(MyPushReceiver.KEY_PUSH_DATA))).getString("alert");
         } catch (JSONException e) {
             e.printStackTrace();
         }
         if (alert == null) {
             return;
         }
-        String[] alertParts=alert.split("\\+");
+        String[] alertParts = alert.split("\\+");
         if (alertParts.length == 3) {
             isResponsePush = true;
             debtStatus = Integer.parseInt(alertParts[0]);

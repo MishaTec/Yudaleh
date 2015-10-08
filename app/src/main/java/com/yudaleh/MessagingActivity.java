@@ -47,7 +47,11 @@ public class MessagingActivity extends Activity {
 
         Intent intent = getIntent();
         recipientId = intent.getStringExtra("RECIPIENT_ID");
-        currentUserId = ParseUser.getCurrentUser().getObjectId();
+
+        ParseUser currUser = ParseUser.getCurrentUser();
+        if (currUser!=null) {
+            currentUserId = currUser.getObjectId();
+        }
 
         messagesList = (ListView) findViewById(R.id.listMessages);
         messageAdapter = new MessageAdapter(this);

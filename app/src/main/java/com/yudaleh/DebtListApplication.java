@@ -31,9 +31,9 @@ public class DebtListApplication extends Application {
         Parse.setLogLevel(Parse.LOG_LEVEL_DEBUG);
 
         // Prevents null - uses anonymous
-        ParseUser.enableAutomaticUser();
-        ParseUser.getCurrentUser().increment("RunCount");
-        ParseUser.getCurrentUser().saveInBackground();
+//        ParseUser.enableAutomaticUser();// FIXME: 08/10/2015 null
+//        ParseUser.getCurrentUser().increment("RunCount");// REMOVE: 08/10/2015
+//        ParseUser.getCurrentUser().saveInBackground();
 
 //        ParseACL defaultACL = new ParseACL();// TODO: 04/09/2015
 //        ParseACL.setDefaultACL(defaultACL, true);
