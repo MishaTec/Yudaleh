@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/res/values/values.xml -->
+    <!-- From: file:/C:/Users/user/StudioProjects/Yudaleh-1/slideDateTimePicker/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/res/values/values.xml -->
     <eat-comment/>
     <attr format="reference" name="drawerArrowStyle"/>
     <attr format="dimension" name="height"/>
@@ -17,17 +17,17 @@
     <color name="abc_search_url_text_normal">#7fa87f</color>
     <color name="abc_search_url_text_pressed">@android:color/black</color>
     <color name="abc_search_url_text_selected">@android:color/black</color>
-    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/src/main/res/values/colors.xml -->
+    <!-- From: file:/C:/Users/user/StudioProjects/Yudaleh-1/slideDateTimePicker/src/main/res/values/colors.xml -->
     <eat-comment/>
     <color name="accent_add">#E91E63</color>
-    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/res/values/values.xml -->
+    <!-- From: file:/C:/Users/user/StudioProjects/Yudaleh-1/slideDateTimePicker/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/res/values/values.xml -->
     <eat-comment/>
     <color name="accent_material_dark">@color/material_deep_teal_200</color>
     <color name="accent_material_light">@color/material_deep_teal_500</color>
-    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/src/main/res/values/colors.xml -->
+    <!-- From: file:/C:/Users/user/StudioProjects/Yudaleh-1/slideDateTimePicker/src/main/res/values/colors.xml -->
     <eat-comment/>
     <color name="accent_pressed_add">#C2185B</color>
-    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/res/values/values.xml -->
+    <!-- From: file:/C:/Users/user/StudioProjects/Yudaleh-1/slideDateTimePicker/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/res/values/values.xml -->
     <eat-comment/>
     <color name="background_floating_material_dark">@color/material_grey_800</color>
     <color name="background_floating_material_light">@android:color/white</color>
@@ -47,11 +47,11 @@
     <color name="dim_foreground_material_light">#ff323232</color>
     <color name="foreground_material_dark">@android:color/white</color>
     <color name="foreground_material_light">@android:color/black</color>
-    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/src/main/res/values/colors.xml -->
+    <!-- From: file:/C:/Users/user/StudioProjects/Yudaleh-1/slideDateTimePicker/src/main/res/values/colors.xml -->
     <eat-comment/>
     <item name="gray_holo_dark" type="color">#ff464646</item>
     <item name="gray_holo_light" type="color">#ffd0d0d0</item>
-    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/res/values/values.xml -->
+    <!-- From: file:/C:/Users/user/StudioProjects/Yudaleh-1/slideDateTimePicker/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/res/values/values.xml -->
     <eat-comment/>
     <color name="highlighted_text_material_dark">#6680cbc4</color>
     <color name="highlighted_text_material_light">#66009688</color>
@@ -69,17 +69,17 @@
     <color name="material_grey_800">#ff424242</color>
     <color name="material_grey_850">#ff303030</color>
     <color name="material_grey_900">#ff212121</color>
-    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/src/main/res/values/colors.xml -->
+    <!-- From: file:/C:/Users/user/StudioProjects/Yudaleh-1/slideDateTimePicker/src/main/res/values/colors.xml -->
     <eat-comment/>
     <color name="primary_dark_main">#303f9f</color>
-    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/res/values/values.xml -->
+    <!-- From: file:/C:/Users/user/StudioProjects/Yudaleh-1/slideDateTimePicker/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/res/values/values.xml -->
     <eat-comment/>
     <color name="primary_dark_material_dark">@android:color/black</color>
     <color name="primary_dark_material_light">@color/material_grey_600</color>
-    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/src/main/res/values/colors.xml -->
+    <!-- From: file:/C:/Users/user/StudioProjects/Yudaleh-1/slideDateTimePicker/src/main/res/values/colors.xml -->
     <eat-comment/>
     <color name="primary_main">#3f51b5</color>
-    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/res/values/values.xml -->
+    <!-- From: file:/C:/Users/user/StudioProjects/Yudaleh-1/slideDateTimePicker/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/res/values/values.xml -->
     <eat-comment/>
     <color name="primary_material_dark">@color/material_grey_900</color>
     <color name="primary_material_light">@color/material_grey_100</color>
@@ -87,10 +87,10 @@
     <color name="primary_text_default_material_light">#de000000</color>
     <color name="primary_text_disabled_material_dark">#4Dffffff</color>
     <color name="primary_text_disabled_material_light">#39000000</color>
-    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/src/main/res/values/colors.xml -->
+    <!-- From: file:/C:/Users/user/StudioProjects/Yudaleh-1/slideDateTimePicker/src/main/res/values/colors.xml -->
     <eat-comment/>
     <color name="ripple_add">#F06292</color>
-    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/res/values/values.xml -->
+    <!-- From: file:/C:/Users/user/StudioProjects/Yudaleh-1/slideDateTimePicker/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/res/values/values.xml -->
     <eat-comment/>
     <color name="ripple_material_dark">#42ffffff</color>
     <color name="ripple_material_light">#1f000000</color>
@@ -238,7 +238,7 @@
     <style name="AlertDialog.AppCompat.Light" parent="Base.AlertDialog.AppCompat.Light"/>
     <style name="Animation.AppCompat.Dialog" parent="Base.Animation.AppCompat.Dialog"/>
     <style name="Animation.AppCompat.DropDownUp" parent="Base.Animation.AppCompat.DropDownUp"/>
-    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/src/main/res/values/styles.xml -->
+    <!-- From: file:/C:/Users/user/StudioProjects/Yudaleh-1/slideDateTimePicker/src/main/res/values/styles.xml -->
     <eat-comment/>
     <style name="AppBaseTheme" parent="android:Theme.Light">
         <!--
@@ -251,7 +251,7 @@
     <style name="AppTheme" parent="AppBaseTheme">
         <!-- All customizations that are NOT specific to a particular API-level can go here. -->
     </style>
-    <!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/res/values/values.xml -->
+    <!-- From: file:/C:/Users/user/StudioProjects/Yudaleh-1/slideDateTimePicker/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/res/values/values.xml -->
     <eat-comment/>
     <style name="Base.AlertDialog.AppCompat" parent="android:Widget">
         <item name="android:layout">@layout/abc_alert_dialog_material</item>

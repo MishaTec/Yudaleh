@@ -149,9 +149,9 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
                 debtTitle.setTextColor(Color.GREEN);
             } else if (debt.getStatus() == Debt.STATUS_CONFIRMED) {
                 debtTitle.setTextColor(Color.BLUE);
-            } else if (debt.getStatus() == Debt.STATUS_RETURNED) {
+            } else if (debt.getStatus() == Debt.STATUS_RETURNED) {// TODO: 08/10/2015
                 debtTitle.setTextColor(Color.MAGENTA);
-            } else {
+            } else if(debt.getStatus() == Debt.STATUS_DELETED) {
                 debtTitle.setTextColor(Color.YELLOW);
             }
 
