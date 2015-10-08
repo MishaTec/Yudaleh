@@ -143,7 +143,11 @@ public class MainActivity extends AppCompatActivity {
             setSyncOptionVisibility(true);
         }
         Intent intent = getIntent();
-        if (intent != null && intent.hasExtra(Debt.KEY_TAB_TAG)) {
+
+        if (intent != null && intent.hasExtra("isResponsePush")) {
+            ActionBar actionBar = getSupportActionBar();
+            actionBar.selectTab(actionBar.getTabAt(I_OWE_TAB_INDEX));
+        } else if (intent != null && intent.hasExtra(Debt.KEY_TAB_TAG)) {
             String tabTag = intent.getStringExtra(Debt.KEY_TAB_TAG);
             ActionBar actionBar = getSupportActionBar();
             if (tabTag.equals(Debt.I_OWE_TAG)) {
@@ -651,7 +655,7 @@ public class MainActivity extends AppCompatActivity {
         query.findInBackground(new FindCallback<Debt>() {
             public void done(final List<Debt> debts, ParseException e) {
                 if (e == null) {
-                    ParseObject.pinAllInBackground(DebtListApplication.DEBT_GROUP_NAME,debts,
+                    ParseObject.pinAllInBackground(DebtListApplication.DEBT_GROUP_NAME, debts,
                             new SaveCallback() {
                                 public void done(ParseException e) {
                                     if (e == null) {

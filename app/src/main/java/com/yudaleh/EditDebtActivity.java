@@ -200,20 +200,23 @@ public class EditDebtActivity extends AppCompatActivity {
                     break;
                 }
                 setDebtFieldsAfterEditing();
-                boolean isExistingUser =isExistingUser(debt.getOwnerPhone());
-                if (!isExistingUser) {
+                boolean isExistingUser = isExistingUser(debt.getOwnerPhone());
 
-                }
                 if ((isNew || isModified)) {
                     if (pushCheckBox.isChecked()) {// TODO: 24/09/2015 settings
                         if (isExistingUser) {
-                            sendPushToOwner();// TODO: 9/30/2015  auto receive push if modified (update existing)
+                            if (!isFromPush) {
+                                sendPushToOwner();// TODO: 9/30/2015  auto receive push if modified (update existing)
+                            }
                             showActionsDialog();
                         } else {
                             showNoPhoneErrorDialog();
                         }
-                    } else {
+                    } else if (debt.getOwnerPhone() != null) {
                         showActionsDialog();
+                    }
+                    else{
+                        saveDebt(FLAG_SET_ALARM | FLAG_FORCE_BACK_TO_MAIN);
                     }
                 } else {
                     saveDebt(FLAG_SET_ALARM | FLAG_FORCE_BACK_TO_MAIN);
@@ -245,7 +248,7 @@ public class EditDebtActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (isExistingUser(debt.getOwnerPhone())) {
-                            sendPushResponse(debt.getOtherUuid(), Debt.STATUS_DELETED);// TODO: 16/09/2015 move to "done" marking
+                            sendPushResponse(debt.getOtherUuid(), Debt.STATUS_DELETED);
                         }
                         cancelAlarm(debt);
                         // The debt will be deleted eventually but will immediately be excluded from mQuery results.
