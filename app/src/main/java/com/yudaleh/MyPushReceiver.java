@@ -15,7 +15,6 @@ import com.parse.GetCallback;
 import com.parse.ParseException;
 import com.parse.ParsePushBroadcastReceiver;
 import com.parse.ParseQuery;
-import com.parse.SaveCallback;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -54,9 +53,6 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
         }
         ParseQuery<Debt> query = Debt.getQuery();
         query.whereEqualTo(Debt.KEY_UUID, debtId);
-        if(isResponsePush) {
-            query.fromLocalDatastore();
-        }// TODO: 08/10/2015 modified debt dialog
         query.getFirstInBackground(new GetCallback<Debt>() {
 
             @Override
@@ -74,18 +70,6 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
                     if (debtStatus == Debt.STATUS_RETURNED) {
                         cancelAlarm(context, debt);
                     }
-
-                    debt.saveInBackground(new SaveCallback() {
-                        @Override
-                        public void done(ParseException e) {
-                            Intent intent = new Intent(context, MainActivity.class);
-                            intent.putExtra(Debt.KEY_TAB_TAG, debt.getTabTag());
-                            intent.putExtra("isResponsePush", true);
-                            context.startActivity(intent);
-                        }
-                    });
-
-                    return;
                 }
                 if (debt.getTabTag().equals(Debt.OWE_ME_TAG)) { // reversed logic
                     createNotification(context, "You owe " + debt.getAuthorName(), debt.getTitle(), alert);
@@ -97,14 +81,6 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
         });
     }
 
-    /**
-     * Opens {@link MainActivity}.
-     *
-     * @param debt for the intent's extras.
-     */
-    private void returnToMain(Debt debt) {
-
-    }
     /**
      * Creates and shows notification to the user.
      *
@@ -135,7 +111,7 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
         if (debt.getAuthorPhone() != null) {
             // Create dialing action
             String dialTitle = "Call " + debt.getAuthorName();
-            int dialIcon = R.drawable.ic_call_white_36dp;
+            int dialIcon = R.drawable.ic_call_black_36dp;
             Intent dialIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + debt.getAuthorPhone()));
             PendingIntent notificationCallIntent = PendingIntent.getActivity(context, 0, dialIntent
                     , PendingIntent.FLAG_UPDATE_CURRENT);
