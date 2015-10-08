@@ -91,7 +91,7 @@
             android:id="@+id/push_checkbox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:checked="true"
+            android:checked="false"
             android:visibility="gone"
             android:text="@string/push_checkbox_text" />
 

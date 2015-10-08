@@ -186,59 +186,35 @@ public class EditDebtActivity extends AppCompatActivity {
             case android.R.id.home:
                 setDebtFieldsAfterEditing();
                 if (isModified) {
-                    (new AlertDialog.Builder(this))
-                            .setMessage(R.string.save_changes_confirm)
-                            .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    if (!validateDebtDetails()) {
-                                        return;
-                                    }
-                                    saveDebt(FLAG_SET_ALARM | FLAG_FORCE_BACK_TO_MAIN);
-                                    // TODO: 9/30/2015 send update push
-                                }
-                            })
-                            .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    revertChangesAndCancel();
-                                }
-                            })
-                            .show();
+                    showSaveChangesConfirm();
                     return true;
                 } else {
                     cancelActivity();
                 }
                 break;
             case R.id.action_delete:// TODO: 24/09/2015 confirm dialog
-                (new AlertDialog.Builder(EditDebtActivity.this))
-                        .setMessage(R.string.delete_confirm_message)
-                        .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                if (isExistingUser(debt.getOwnerPhone())) {
-                                    sendPushResponse(debt.getOtherUuid(), Debt.STATUS_RETURNED);// TODO: 16/09/2015 move to "done" marking
-                                }
-                                cancelAlarm(debt);
-                                // The debt will be deleted eventually but will immediately be excluded from mQuery results.
-                                debt.deleteEventually();
-                                setResult(Activity.RESULT_OK);
-                                finish();
-                            }
-                        })
-                        .setNegativeButton(R.string.cancel, null)
-                        .show();
+                showDeleteConfirm();
                 break;
             case R.id.action_done:
                 if (!validateDebtDetails()) {
                     break;
                 }
                 setDebtFieldsAfterEditing();
-                if ((isNew || isModified) && isExistingUser(debt.getOwnerPhone())) {
+                boolean isExistingUser =isExistingUser(debt.getOwnerPhone());
+                if (!isExistingUser) {
+
+                }
+                if ((isNew || isModified)) {
                     if (pushCheckBox.isChecked()) {// TODO: 24/09/2015 settings
-                        sendPushToOwner();// TODO: 9/30/2015  auto receive push if modified (update existing)
+                        if (isExistingUser) {
+                            sendPushToOwner();// TODO: 9/30/2015  auto receive push if modified (update existing)
+                            showActionsDialog();
+                        } else {
+                            showNoPhoneErrorDialog();
+                        }
+                    } else {
+                        showActionsDialog();
                     }
-                    showActionsDialog();
                 } else {
                     saveDebt(FLAG_SET_ALARM | FLAG_FORCE_BACK_TO_MAIN);
                 }
@@ -247,6 +223,61 @@ public class EditDebtActivity extends AppCompatActivity {
                 break;
         }
         return false;
+    }
+
+    private void showNoPhoneErrorDialog() {
+        (new AlertDialog.Builder(EditDebtActivity.this))
+                .setMessage(R.string.no_phone_error)
+                .setPositiveButton(R.string.skip_sync, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        showActionsDialog();
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void showDeleteConfirm() {
+        (new AlertDialog.Builder(EditDebtActivity.this))
+                .setMessage(R.string.delete_confirm_message)
+                .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (isExistingUser(debt.getOwnerPhone())) {
+                            sendPushResponse(debt.getOtherUuid(), Debt.STATUS_DELETED);// TODO: 16/09/2015 move to "done" marking
+                        }
+                        cancelAlarm(debt);
+                        // The debt will be deleted eventually but will immediately be excluded from mQuery results.
+                        debt.deleteEventually();
+                        setResult(Activity.RESULT_OK);
+                        finish();
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void showSaveChangesConfirm() {
+        (new AlertDialog.Builder(this))
+                .setMessage(R.string.save_changes_confirm)
+                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (!validateDebtDetails()) {
+                            return;
+                        }
+                        saveDebt(FLAG_SET_ALARM | FLAG_FORCE_BACK_TO_MAIN);
+                        // TODO: 9/30/2015 send update push
+                    }
+                })
+                .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        revertChangesAndCancel();
+                    }
+                })
+                .show();
     }
 
     static boolean isExistingUser(String phone) {
@@ -399,7 +430,7 @@ public class EditDebtActivity extends AppCompatActivity {
 
         ParseUser currUser = ParseUser.getCurrentUser();
 //        debt.setAuthor(currUser);// REMOVE: 07/10/2015
-        if(currUser!=null) {
+        if (currUser != null) {
             debt.setAuthorName(currUser.getString(MainActivity.PARSE_USER_NAME_KEY));
             debt.setAuthorPhone(currUser.getString(MainActivity.PARSE_USER_PHONE_KEY));
         }
@@ -565,7 +596,7 @@ public class EditDebtActivity extends AppCompatActivity {
         }
         int array;
         ParseUser currUser = ParseUser.getCurrentUser();
-        if (currUser!=null) {
+        if (currUser != null && isExistingUser(debt.getOwnerPhone())) {
             array = R.array.contact_actions_array_logged_in;
         } else {
             array = R.array.contact_actions_array_logged_out;
@@ -726,10 +757,11 @@ public class EditDebtActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                if (s != null&& s.toString().length() > 0) {
+                if (s != null && s.toString().length() > 0) {
+                    pushCheckBox.setChecked(true);
                     pushCheckBox.setVisibility(View.VISIBLE);
-                }
-                else {
+                } else {
+                    pushCheckBox.setChecked(false);
                     pushCheckBox.setVisibility(View.GONE);
                 }
             }

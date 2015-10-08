@@ -42,6 +42,7 @@ public class Debt extends ParseObject {
     static final int STATUS_PENDING = 2;
     static final int STATUS_CONFIRMED = 3;
     static final int STATUS_RETURNED = 4;
+    static final int STATUS_DELETED = 5;
 
     String getTabTag() {
         return getString(KEY_TAB_TAG);

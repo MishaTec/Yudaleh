@@ -199,7 +199,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
     private void showActionsDialog(final Debt debt) {
         int array;
         ParseUser currUser = ParseUser.getCurrentUser();
-        if (currUser!=null) {
+        if (currUser!=null && EditDebtActivity.isExistingUser(debt.getOwnerPhone())) {
             array = R.array.contact_actions_array_logged_in;
         } else {
             array = R.array.contact_actions_array_logged_out;
