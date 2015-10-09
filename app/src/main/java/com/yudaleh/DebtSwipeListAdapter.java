@@ -99,7 +99,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
             holder.action2.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    showActionsDialog(debt);
+                    showActionsDialog(debt,false);
                 }
             });
         } else {
@@ -149,9 +149,9 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
                 debtTitle.setTextColor(Color.GREEN);
             } else if (debt.getStatus() == Debt.STATUS_CONFIRMED) {
                 debtTitle.setTextColor(Color.BLUE);
-            } else if (debt.getStatus() == Debt.STATUS_RETURNED) {
+            } else if (debt.getStatus() == Debt.STATUS_RETURNED) {// TODO: 08/10/2015
                 debtTitle.setTextColor(Color.MAGENTA);
-            } else {
+            } else if(debt.getStatus() == Debt.STATUS_DELETED) {
                 debtTitle.setTextColor(Color.YELLOW);
             }
 
@@ -196,10 +196,10 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
     /**
      * Show a confirmation push notification dialog, with an option to call the owner.
      */
-    private void showActionsDialog(final Debt debt) {
+    private void showActionsDialog(final Debt debt, boolean isUserExistenceConfirmed) {
         int array;
         ParseUser currUser = ParseUser.getCurrentUser();
-        if (currUser!=null && EditDebtActivity.isExistingUser(debt.getOwnerPhone())) {
+        if (currUser!=null && (isUserExistenceConfirmed||EditDebtActivity.isExistingUser(debt.getOwnerPhone()))) {
             array = R.array.contact_actions_array_logged_in;
         } else {
             array = R.array.contact_actions_array_logged_out;

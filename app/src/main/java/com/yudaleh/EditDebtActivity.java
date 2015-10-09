@@ -48,7 +48,6 @@ import com.github.jjobes.slidedatetimepicker.SlideDateTimeListener;
 import com.github.jjobes.slidedatetimepicker.SlideDateTimePicker;
 import com.google.gson.Gson;
 import com.parse.FindCallback;
-import com.parse.ParseAnonymousUtils;
 import com.parse.ParseException;
 import com.parse.ParsePush;
 import com.parse.ParseQuery;
@@ -70,6 +69,8 @@ public class EditDebtActivity extends AppCompatActivity {
 
     private static final int FLAG_FORCE_BACK_TO_MAIN = 0x00040000;
     private static final int FLAG_SET_ALARM = 0X00020000;
+    private static final int USER_EXISTENCE_CONFIRMED = 0X00060000;;
+    private static final int USER_EXISTENCE_NOT_CONFIRMED = 0X00080000;;
 
     private Button remindButton;
     private CheckBox remindCheckBox;
@@ -200,21 +201,23 @@ public class EditDebtActivity extends AppCompatActivity {
                     break;
                 }
                 setDebtFieldsAfterEditing();
-                boolean isExistingUser =isExistingUser(debt.getOwnerPhone());
-                if (!isExistingUser) {
+                boolean isExistingUser = isExistingUser(debt.getOwnerPhone());
 
-                }
-                if ((isNew || isModified)) {
+                if ((isNew || isModified) && debt.getOwnerPhone() != null) {
+
                     if (pushCheckBox.isChecked()) {// TODO: 24/09/2015 settings
                         if (isExistingUser) {
-                            sendPushToOwner();// TODO: 9/30/2015  auto receive push if modified (update existing)
-                            showActionsDialog();
+                            if (!isFromPush) {
+                                sendPushToOwner();// TODO: 9/30/2015  auto receive push if modified (update existing)
+                            }
+                            showActionsDialog(true);
                         } else {
                             showNoPhoneErrorDialog();
                         }
                     } else {
-                        showActionsDialog();
+                        showActionsDialog(false);
                     }
+
                 } else {
                     saveDebt(FLAG_SET_ALARM | FLAG_FORCE_BACK_TO_MAIN);
                 }
@@ -231,7 +234,7 @@ public class EditDebtActivity extends AppCompatActivity {
                 .setPositiveButton(R.string.skip_sync, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        showActionsDialog();
+                        showActionsDialog(false);
                     }
                 })
                 .setNegativeButton(R.string.cancel, null)
@@ -245,7 +248,7 @@ public class EditDebtActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (isExistingUser(debt.getOwnerPhone())) {
-                            sendPushResponse(debt.getOtherUuid(), Debt.STATUS_DELETED);// TODO: 16/09/2015 move to "done" marking
+                            sendPushResponse(debt.getOtherUuid(), Debt.STATUS_DELETED);
                         }
                         cancelAlarm(debt);
                         // The debt will be deleted eventually but will immediately be excluded from mQuery results.
@@ -587,7 +590,12 @@ public class EditDebtActivity extends AppCompatActivity {
         });
     }
 
-    private void showActionsDialog() {
+    /**
+     * Shows a dialog with contact actions: call, sms, chat.
+     *
+     * @param isUserExistenceConfirmed whether {@link #isExistingUser(String)} already returned true
+     */
+    private void showActionsDialog(boolean isUserExistenceConfirmed) {
         int title;
         if (isNew) {
             title = R.string.contact_actions_dialog_title_new_debt;
@@ -596,7 +604,7 @@ public class EditDebtActivity extends AppCompatActivity {
         }
         int array;
         ParseUser currUser = ParseUser.getCurrentUser();
-        if (currUser != null && isExistingUser(debt.getOwnerPhone())) {
+        if (currUser != null && (isUserExistenceConfirmed||isExistingUser(debt.getOwnerPhone()))) {
             array = R.array.contact_actions_array_logged_in;
         } else {
             array = R.array.contact_actions_array_logged_out;
