@@ -47,7 +47,6 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
     private List<Contact> mDataHeaders;
     private List<Debt> mSelectedData;
     private HashMap<String, Integer> mOwnerNamesCount;
-    private HashMap<String, Integer> mOwnerNamesCountNoPhone;
     private HashMap<String, List<Debt>> mDataChildren;
 
     // TODO: 29/09/2015 pinned heads
@@ -113,16 +112,18 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         String name = owner.getOwnerName();
 
         if (convertView == null) {
-            LayoutInflater infalInflater = (LayoutInflater) mContext
+            LayoutInflater inflater = (LayoutInflater) mContext
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            convertView = infalInflater.inflate(R.layout.list_group, null);
+            convertView = inflater.inflate(R.layout.list_group, null);
         }
 
         String headerTitle = name;
-        if (phone != null && mOwnerNamesCount.get(name) > 1) {
-            headerTitle += " (" + phone + ")";
+        if (mOwnerNamesCount.get(name) > 1) {
+            if (phone != null) {
+                headerTitle += " (" + phone + ")";
+            } // TODO: 09/10/2015 else, merge dialog (not here)
+
         }
-        // TODO: 05/10/2015 unique identifier for not merged non-money debts
 
         TextView lblListHeader = (TextView) convertView
                 .findViewById(R.id.lblListHeader);
@@ -294,7 +295,6 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         mDataChildren = new HashMap<>();
         mChildrenAdapters = new HashMap<>();
         mOwnerNamesCount = new HashMap<>();
-        mOwnerNamesCountNoPhone = new HashMap<>();
 
         addOnQueryLoadListener(new OnQueryLoadListener<Debt>() {
             @Override
@@ -316,7 +316,6 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         mDataChildren = new HashMap<>();
         mChildrenAdapters = new HashMap<>();
         mOwnerNamesCount = new HashMap<>();
-        mOwnerNamesCountNoPhone = new HashMap<>();
         mDataHeaders = new ArrayList<>();
         mSelectedData = new ArrayList<>();
 
@@ -340,6 +339,13 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
                 mChildrenAdapters.put(key, debtAdapters);
 
                 mDataHeaders.add(contact);
+                if (phone != null) {
+                    if (!mOwnerNamesCount.containsKey(name)) {
+                        mOwnerNamesCount.put(name, 1);
+                    } else {
+                        mOwnerNamesCount.put(name, mOwnerNamesCount.get(name) + 1);
+                    }
+                }
             } else {
                 mDataChildren.get(key).add(debt);
                 mChildrenAdapters.get(key).add(swipeAdapter);
@@ -348,20 +354,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
             for (Contact c : mDataHeaders) {
                 c.setTotalMoney(countTotalMoney(c.getMapKey()));
             }
-            if (phone != null) {
-                if (!mOwnerNamesCount.containsKey(name)) {
-                    mOwnerNamesCount.put(name, 1);
-                } else {
-                    mOwnerNamesCount.put(name, mOwnerNamesCount.get(name) + 1);
-                }
-            } else {
-                if (!mOwnerNamesCountNoPhone.containsKey(name)) {
-                    mOwnerNamesCountNoPhone.put(name, 1);
-                } else {
-                    // TODO: 05/10/2015 dialog
-                    mOwnerNamesCountNoPhone.put(name, mOwnerNamesCountNoPhone.get(name) + 1);
-                }
-            }
+
         }
         Collections.sort(mDataHeaders, new Comparator<Contact>() {
             @Override
