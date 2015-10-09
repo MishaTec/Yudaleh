@@ -7,10 +7,8 @@ import com.google.i18n.phonenumbers.Phonenumber;
 import com.parse.ParseClassName;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
-import com.parse.ParseUser;
 
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 
@@ -18,6 +16,7 @@ import java.util.UUID;
 public class Debt extends ParseObject {
 
     static final String KEY_UUID = "uuid";
+    static final String KEY_DATE_CREATED = "dateCreated";
     static final String KEY_IS_DRAFT = "isDraft";
 //    static final String KEY_AUTHOR = "author";// REMOVE: 07/10/2015
     static final String KEY_AUTHOR_NAME = "authorName";
@@ -173,6 +172,18 @@ public class Debt extends ParseObject {
         }
     }
 
+    Date getDateCreated() {
+        return getDate(KEY_DATE_CREATED);
+    }
+
+    void setDateCreated(Date dateCreated) {
+        if (dateCreated != null) {
+            put(KEY_DATE_CREATED, dateCreated);
+        } else {
+            remove(KEY_DATE_CREATED);
+        }
+    }
+
 /*    @Deprecated
     ParseUser getAuthor() {
         return getParseUser(KEY_AUTHOR);
@@ -247,9 +258,7 @@ public class Debt extends ParseObject {
         if (keySet().size() != other.keySet().size()) {
             return false;
         }
-        for (Iterator it = other.keySet().iterator(); it.hasNext(); ) {
-            Object keyObj = it.next();
-            String key = keyObj.toString();
+        for (String key : other.keySet()) {
             if (!other.get(key).equals(get(key))) {
                 return false;
             }
@@ -259,9 +268,7 @@ public class Debt extends ParseObject {
 
     Debt createClone() {
         Debt clone = new Debt();
-        for (Iterator it = keySet().iterator(); it.hasNext(); ) {
-            Object keyObj = it.next();
-            String key = keyObj.toString();
+        for (String key : keySet()) {
             clone.put(key, get(key));
         }
         return clone;
@@ -270,16 +277,12 @@ public class Debt extends ParseObject {
     void copyFrom(Debt other){
         Set<String> otherKeys = other.keySet();
 
-        for (Iterator it = otherKeys.iterator(); it.hasNext(); ) {
-            Object keyObj = it.next();
-            String key = keyObj.toString();
+        for (String key : otherKeys) {
             put(key, other.get(key));
         }
 
         // Make sure there are no extra keys
-        for (Iterator it = keySet().iterator(); it.hasNext(); ) {
-            Object keyObj = it.next();
-            String key = keyObj.toString();
+        for (String key : keySet()) {
             if (!otherKeys.contains(key)) {
                 remove(key);
             }

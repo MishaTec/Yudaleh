@@ -52,7 +52,7 @@
             android:layout_toEndOf="@id/debt_icon" />
 
         <TextView
-            android:id="@+id/debt_subtitle"
+            android:id="@+id/debt_subtitle1"
             style="@style/ListDescription"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"

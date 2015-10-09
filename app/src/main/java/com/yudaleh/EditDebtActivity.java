@@ -518,6 +518,7 @@ public class EditDebtActivity extends AppCompatActivity {
 
         Debt other = query.getFirst();
         debt.setOtherUuid(debtId);
+        debt.setDateCreated(other.getDateCreated());
         debt.setTabTag(reverseTag(other.getTabTag()));
         debtTitleText.setText(other.getTitle());
         debtOwnerText.setText(other.getAuthorName());
@@ -546,6 +547,7 @@ public class EditDebtActivity extends AppCompatActivity {
         } else {
             isNew = true;
             debt = new Debt();
+            debt.setDateCreated(new Date());
             debt.setUuidString();
             debt.setTabTag(debtTabTag);
         }

@@ -339,12 +339,10 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
                 mChildrenAdapters.put(key, debtAdapters);
 
                 mDataHeaders.add(contact);
-                if (phone != null) {
-                    if (!mOwnerNamesCount.containsKey(name)) {
-                        mOwnerNamesCount.put(name, 1);
-                    } else {
-                        mOwnerNamesCount.put(name, mOwnerNamesCount.get(name) + 1);
-                    }
+                if (!mOwnerNamesCount.containsKey(name)) {
+                    mOwnerNamesCount.put(name, 1);
+                } else {
+                    mOwnerNamesCount.put(name, mOwnerNamesCount.get(name) + 1);
                 }
             } else {
                 mDataChildren.get(key).add(debt);

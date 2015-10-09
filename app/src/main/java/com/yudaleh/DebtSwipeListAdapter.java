@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
+import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -99,7 +100,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
             holder.action2.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    showActionsDialog(debt,false);
+                    showActionsDialog(debt, false);
                 }
             });
         } else {
@@ -151,13 +152,19 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
                 debtTitle.setTextColor(Color.BLUE);
             } else if (debt.getStatus() == Debt.STATUS_RETURNED) {// TODO: 08/10/2015
                 debtTitle.setTextColor(Color.MAGENTA);
-            } else if(debt.getStatus() == Debt.STATUS_DELETED) {
+            } else if (debt.getStatus() == Debt.STATUS_DELETED) {
                 debtTitle.setTextColor(Color.YELLOW);
             }
 
         }
-
-        debtSubtitle.setText(debt.getOwnerName());
+        String created = DateFormat.format("MM/dd/yy", debt.getDateCreated().getTime()).toString();
+        String due = null;
+        Date dueDate = debt.getDueDate();
+        if (dueDate != null) {
+            due = DateFormat.format("MM/dd/yy h:mmaa", dueDate.getTime()).toString();
+        }
+        String subtitle = "created: " + created + (due != null ? " due: " + due : "");
+        debtSubtitle.setText(subtitle);
         return view;
     }
 
@@ -199,7 +206,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
     private void showActionsDialog(final Debt debt, boolean isUserExistenceConfirmed) {
         int array;
         ParseUser currUser = ParseUser.getCurrentUser();
-        if (currUser!=null && (isUserExistenceConfirmed||EditDebtActivity.isExistingUser(debt.getOwnerPhone()))) {
+        if (currUser != null && (isUserExistenceConfirmed || EditDebtActivity.isExistingUser(debt.getOwnerPhone()))) {
             array = R.array.contact_actions_array_logged_in;
         } else {
             array = R.array.contact_actions_array_logged_out;
@@ -220,7 +227,6 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
                                 Intent sms = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", debt.getOwnerPhone(), null));
                                 mContext.startActivity(sms);
                                 break;
-
                         }
                     }
                 })
