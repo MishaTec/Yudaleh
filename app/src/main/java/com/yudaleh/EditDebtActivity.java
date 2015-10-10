@@ -69,6 +69,9 @@ public class EditDebtActivity extends AppCompatActivity {
 
     private static final int FLAG_FORCE_BACK_TO_MAIN = 0x00040000;
     private static final int FLAG_SET_ALARM = 0X00020000;
+    private static final int USER_EXISTENCE_CONFIRMED = 0X00060000;;
+    private static final int USER_EXISTENCE_NOT_CONFIRMED = 0X00080000;;
+    private static final int USER_EXISTENCE_NOT_CHECKED = 0X00070000;;
 
     private Button remindButton;
     private CheckBox remindCheckBox;
@@ -581,7 +584,7 @@ public class EditDebtActivity extends AppCompatActivity {
      *
      * @param isUserExistenceConfirmed whether {@link #isExistingUser(String)} already returned true
      */
-    private void showActionsDialog(boolean isUserExistenceConfirmed) {
+    private void showActionsDialog(int flags) {
         int title;
         if (isNew) {
             title = R.string.contact_actions_dialog_title_new_debt;
