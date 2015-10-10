@@ -69,8 +69,6 @@ public class EditDebtActivity extends AppCompatActivity {
 
     private static final int FLAG_FORCE_BACK_TO_MAIN = 0x00040000;
     private static final int FLAG_SET_ALARM = 0X00020000;
-    private static final int USER_EXISTENCE_CONFIRMED = 0X00060000;;
-    private static final int USER_EXISTENCE_NOT_CONFIRMED = 0X00080000;;
 
     private Button remindButton;
     private CheckBox remindCheckBox;
@@ -231,20 +229,25 @@ public class EditDebtActivity extends AppCompatActivity {
     private void showNoPhoneErrorDialog() {
         (new AlertDialog.Builder(EditDebtActivity.this))
                 .setMessage(R.string.no_phone_error)
-                .setPositiveButton(R.string.skip_sync, new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.phone_error_skip, new DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                    public void onClick(DialogInterface dialog, int which) {// TODO: 10/10/2015 sync later
                         showActionsDialog(false);
                     }
                 })
-                .setNegativeButton(R.string.cancel, null)
+                .setNegativeButton(R.string.phone_error_edit, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        requestViewFocus(debtPhoneText);
+                    }
+                })
                 .show();
     }
 
     private void showDeleteConfirm() {
         (new AlertDialog.Builder(EditDebtActivity.this))
                 .setMessage(R.string.delete_confirm_message)
-                .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (isExistingUser(debt.getOwnerPhone())) {
@@ -257,7 +260,7 @@ public class EditDebtActivity extends AppCompatActivity {
                         finish();
                     }
                 })
-                .setNegativeButton(R.string.cancel, null)
+                .setNegativeButton(android.R.string.no, null)
                 .show();
     }
 
@@ -302,7 +305,7 @@ public class EditDebtActivity extends AppCompatActivity {
      */
     private void revertChangesAndCancel() {
         if (!isNew) {
-            debt.copyFrom(beforeChange); // TODO: 9/30/2015 check if needed
+            debt.copyFrom(beforeChange); // TODO: 9/30/2015 check if needed, cuz debt may stay unsaved
         } // otherwise, changes are not saved anyway
         cancelActivity();
     }
@@ -322,26 +325,7 @@ public class EditDebtActivity extends AppCompatActivity {
     public void onBackPressed() {
         setDebtFieldsAfterEditing();
         if (isModified) {
-            (new AlertDialog.Builder(this))
-                    .setMessage(R.string.save_changes_confirm)
-                    .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            if (!validateDebtDetails()) {
-                                return;
-                            }
-                            saveDebt(FLAG_SET_ALARM | FLAG_FORCE_BACK_TO_MAIN);
-                            // TODO: 9/30/2015 send update push
-                            EditDebtActivity.super.onBackPressed();
-                        }
-                    })
-                    .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            revertChangesAndCancel();
-                        }
-                    })
-                    .show();
+            showSaveChangesConfirm();
         } else {
             cancelActivity();
         }
@@ -389,7 +373,7 @@ public class EditDebtActivity extends AppCompatActivity {
     //**********************************************************************************************
 
     /**
-     * Pins the <code>Debt</code> in local database and ? todo
+     * Pins the <code>Debt</code> in local database and
      *
      * @param flags the <code>flags</code> parameter for the {@link #wrapUp}.
      */
@@ -606,7 +590,7 @@ public class EditDebtActivity extends AppCompatActivity {
         }
         int array;
         ParseUser currUser = ParseUser.getCurrentUser();
-        if (currUser != null && (isUserExistenceConfirmed||isExistingUser(debt.getOwnerPhone()))) {
+        if (currUser != null && (isUserExistenceConfirmed || isExistingUser(debt.getOwnerPhone()))) {
             array = R.array.contact_actions_array_logged_in;
         } else {
             array = R.array.contact_actions_array_logged_out;

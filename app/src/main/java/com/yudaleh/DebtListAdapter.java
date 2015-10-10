@@ -4,20 +4,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.ActionMode;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.ExpandableListAdapter;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import com.fortysevendeg.swipelistview.BaseSwipeListViewListener;
@@ -44,7 +37,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
     private final Context mContext;
     private final ArrayList<Integer> mColors;
     private HashMap<String, List<ArrayAdapter<Debt>>> mChildrenAdapters;
-    private List<Contact> mDataHeaders;
+    private List<Header> mDataHeaders;
     private List<Debt> mSelectedData;
     private HashMap<String, Integer> mOwnerNamesCount;
     private HashMap<String, List<Debt>> mDataChildren;
@@ -107,9 +100,9 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
 
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
-        Contact owner = (Contact) getGroup(groupPosition);
-        String phone = owner.getOwnerPhone();
-        String name = owner.getOwnerName();
+        Header header = (Header) getGroup(groupPosition);
+        String phone = header.getOwnerPhone();
+        String name = header.getOwnerName();
 
         if (convertView == null) {
             LayoutInflater inflater = (LayoutInflater) mContext
@@ -130,18 +123,12 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         lblListHeader.setTypeface(null, Typeface.BOLD);
         lblListHeader.setText(headerTitle);
 
-        if (owner.getTotalMoney() > 0) {
-            convertView.setBackgroundColor(owner.getColor());
+        if (header.getTotalMoney() > 0) {
+            convertView.setBackgroundColor(header.getColor());
         } else {
             convertView.setBackgroundColor(Color.LTGRAY);
         }
         return convertView;
-    }
-
-    public int convertDpToPixel(float dp) {
-        DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
-        float px = dp * (metrics.densityDpi / 160f);
-        return (int) px;
     }
 
     @Override
@@ -156,6 +143,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         } else {
             holder = (ViewHolder) view.getTag();
         }
+        final Debt debt = (Debt) getChild(groupPosition, childPosition);
         final SwipeListView swipeListView = holder.childList;
 //        swipeListView.color(mColors.get(0));
         swipeListView.setSwipeListViewListener(new BaseSwipeListViewListener() {
@@ -203,7 +191,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
 
             @Override
             public void onClickFrontView(int position) {
-                Log.d("swipe", String.format("onClickFrontView %d", position));
+                openEditView(debt);
             }
 
             @Override
@@ -322,8 +310,8 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         for (Debt debt : debts) {
             String phone = debt.getOwnerPhone();
             String name = debt.getOwnerName();
-            Contact contact = new Contact(phone, name);
-            String key = contact.getMapKey();
+            Header header = new Header(phone, name);
+            String key = header.getMapKey();
 
             // TODO: 03/10/2015 update existing adapters
             ArrayList<Debt> singleItemList = new ArrayList<>();
@@ -338,7 +326,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
                 debtAdapters.add(swipeAdapter);
                 mChildrenAdapters.put(key, debtAdapters);
 
-                mDataHeaders.add(contact);
+                mDataHeaders.add(header);
                 if (!mOwnerNamesCount.containsKey(name)) {
                     mOwnerNamesCount.put(name, 1);
                 } else {
@@ -349,14 +337,14 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
                 mChildrenAdapters.get(key).add(swipeAdapter);
             }
 
-            for (Contact c : mDataHeaders) {
+            for (Header c : mDataHeaders) {
                 c.setTotalMoney(countTotalMoney(c.getMapKey()));
             }
 
         }
-        Collections.sort(mDataHeaders, new Comparator<Contact>() {
+        Collections.sort(mDataHeaders, new Comparator<Header>() {
             @Override
-            public int compare(Contact lhs, Contact rhs) {
+            public int compare(Header lhs, Header rhs) {
                 if (lhs.equals(rhs)) {
                     return 0;
                 }
@@ -369,9 +357,9 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         });
         int i = 0;
         int numColors = mColors.size();
-        for (Contact contact : mDataHeaders) {
-            if (contact.getTotalMoney() > 0) {
-                contact.setColor(mColors.get(i % numColors));
+        for (Header header : mDataHeaders) {
+            if (header.getTotalMoney() > 0) {
+                header.setColor(mColors.get(i % numColors));
                 i++;
             }
         }

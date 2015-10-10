@@ -27,6 +27,7 @@
     </plurals>
 
     <string name="com_parse_ui_username_taken_toast">Username is already taken, please choose a different one</string>
+    <string name="com_parse_ui_phone_taken_toast">Phone is already taken, please choose a different one</string>
     <string name="com_parse_ui_reenter_password_toast">Please re-enter your password</string>
     <string name="com_parse_ui_mismatch_confirm_password_toast">Passwords don\'t match, please try again</string>
     <string name="com_parse_ui_no_email_toast">Please enter your email</string>

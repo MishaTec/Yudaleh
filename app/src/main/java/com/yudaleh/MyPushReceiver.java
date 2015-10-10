@@ -106,11 +106,14 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
      * @param alert   shows on the top bar for one second
      */
     private void createNotification(Context context, String title, String text, String alert) {
-        int alarmId = debt.getUuidString().hashCode();
+        String uuidString = debt.getUuidString();
+        int alarmId = uuidString.hashCode();
+        String authorPhone = debt.getAuthorPhone();
+        String authorName = debt.getAuthorName();
 
         Intent intent = new Intent(context, EditDebtActivity.class);
 //        intent.setFlags(/*Intent.FLAG_ACTIVITY_REORDER_TO_FRONT*/ /*Intent.FLAG_ACTIVITY_SINGLE_TOP | */Intent.FLAG_ACTIVITY_CLEAR_TOP);// REMOVE: 14/09/2015
-        intent.putExtra(Debt.KEY_UUID, debt.getUuidString());
+        intent.putExtra(Debt.KEY_UUID, uuidString);
         intent.putExtra(Debt.KEY_TAB_TAG, debt.getTabTag());
         intent.putExtra("fromPush", true);
 
@@ -124,22 +127,36 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
                 .setContentIntent(notificationIntent)
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
                 .setAutoCancel(true);
-        if (debt.getAuthorPhone() != null) {
+        if (authorPhone != null) {
             // Create dialing action
-            String dialTitle = "Call " + debt.getAuthorName();
-            int dialIcon = R.drawable.ic_call_white_36dp;
-            Intent dialIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + debt.getAuthorPhone()));
-            PendingIntent notificationCallIntent = PendingIntent.getActivity(context, 0, dialIntent
+            String callTitle = "Call " + authorName;
+            int callIcon = R.drawable.ic_call_white_36dp;
+            Intent callIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + authorPhone));
+            PendingIntent notificationCallIntent = PendingIntent.getActivity(context, 0, callIntent
+                    , PendingIntent.FLAG_UPDATE_CURRENT);
+
+            // Create sms action
+            int smsIcon = R.drawable.ic_call_white_36dp;
+            String smsTitle = "SMS " + authorName;
+            Intent smsIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", authorPhone, null));
+            PendingIntent notificationSmsIntent = PendingIntent.getActivity(context, 0, smsIntent
                     , PendingIntent.FLAG_UPDATE_CURRENT);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 builder.addAction(new Notification.Action.Builder(
-                        Icon.createWithResource(context, dialIcon),
-                        dialTitle,
+                        Icon.createWithResource(context, callIcon),
+                        callTitle,
                         notificationCallIntent)
+                        .build());
+                builder.addAction(new Notification.Action.Builder(
+                        Icon.createWithResource(context, smsIcon),
+                        smsTitle,
+                        notificationSmsIntent)
                         .build());
             } else {
                 //noinspection deprecation
-                builder.addAction(dialIcon, dialTitle, notificationCallIntent);
+                builder.addAction(callIcon, callTitle, notificationCallIntent);
+                //noinspection deprecation
+                builder.addAction(smsIcon, smsTitle, notificationSmsIntent);
             }
         }
         Notification notification = builder.build();

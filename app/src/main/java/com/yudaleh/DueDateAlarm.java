@@ -48,7 +48,7 @@ public class DueDateAlarm extends BroadcastReceiver {
      * @param uuid    must be unique.
      * @param tabTag  should not be <code>null</code>.
      */
-    private void createNotification(Context context, String title, String text, String alert, String uuid, String owner, String phone, String tabTag) {
+    private void createNotification(Context context, String title, String text, String alert, String uuid, String ownerName, String ownerPhone, String tabTag) {
         int alarmId = uuid.hashCode();
 
         Intent intent = new Intent(context, EditDebtActivity.class);
@@ -66,22 +66,36 @@ public class DueDateAlarm extends BroadcastReceiver {
                 .setContentIntent(notificationIntent)
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
                 .setAutoCancel(true);
-        if (phone != null) {
+        if (ownerPhone != null) {
             // Create dialing action
-            String dialTitle = "Call " + owner;
-            int dialIcon = R.drawable.ic_call_white_36dp;
-            Intent dialIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phone));
-            PendingIntent notificationCallIntent = PendingIntent.getActivity(context, 0, dialIntent
+            String callTitle = "Call " + ownerName;
+            int callIcon = R.drawable.ic_call_white_36dp;
+            Intent callIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + ownerPhone));
+            PendingIntent notificationCallIntent = PendingIntent.getActivity(context, 0, callIntent
+                    , PendingIntent.FLAG_UPDATE_CURRENT);
+
+            // Create sms action
+            int smsIcon = R.drawable.ic_call_white_36dp;
+            String smsTitle = "SMS " + ownerName;
+            Intent smsIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", ownerPhone, null));
+            PendingIntent notificationSmsIntent = PendingIntent.getActivity(context, 0, smsIntent
                     , PendingIntent.FLAG_UPDATE_CURRENT);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 builder.addAction(new Notification.Action.Builder(
-                        Icon.createWithResource(context,dialIcon),
-                        dialTitle,
+                        Icon.createWithResource(context, callIcon),
+                        callTitle,
                         notificationCallIntent)
+                        .build());
+                builder.addAction(new Notification.Action.Builder(
+                        Icon.createWithResource(context, smsIcon),
+                        smsTitle,
+                        notificationSmsIntent)
                         .build());
             } else {
                 //noinspection deprecation
-                builder.addAction(dialIcon, dialTitle, notificationCallIntent);
+                builder.addAction(callIcon, callTitle, notificationCallIntent);
+                //noinspection deprecation
+                builder.addAction(smsIcon, smsTitle, notificationSmsIntent);
             }
         }
         Notification notification = builder.build();

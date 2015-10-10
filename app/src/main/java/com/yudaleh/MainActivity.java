@@ -346,7 +346,7 @@ public class MainActivity extends AppCompatActivity {
 
                 content.setText(Html.fromHtml(getString(R.string.about_body)));// UNCOMMENT: 14/09/2015
                 // REMOVE: 07/09/2015 info
-                ParseUser curr = ParseUser.getCurrentUser();
+/*                ParseUser curr = ParseUser.getCurrentUser();
                 if (curr != null) {
                     String token = curr.getSessionToken();
                     boolean isAuth = curr.isAuthenticated();
@@ -375,7 +375,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     String info = "\nphone : " + curr.getString(PARSE_USER_PHONE_KEY) + "\nuser: " + curr.getUsername() + "\nisAuth: " + isAuth + "\nisDataAvai: " + isDataAvai + "\nisNew: " + isNew + "\nisDirty: " + isDirty + (isDirtyFixed ? " (fixed)" : "") + "\nkeys: " + keys + "\ndirtyKey: " + dirtyKey + "\nnumDirty: " + numDirty + "\ntoken: " + token + "\nisLinked: " + isLinked + "\npinned: " + numPinned + "\nsaved: " + numSaved;
                     content.setText(info);// REMOVE: 14/09/2015
-                }
+                }*/
                 new AlertDialog.Builder(this)
                         .setTitle(R.string.about)
                         .setView(content)
@@ -464,11 +464,11 @@ public class MainActivity extends AppCompatActivity {
 //                    }
                 }
             } else if (requestCode == LOGIN_ACTIVITY_CODE) {
-                startService(serviceIntent);
-                subscribeToPush();// TODO: 24/09/2015 settings
                 // If the user is new, sync data to Parse, otherwise get the current list from Parse
                 ParseUser currUser = ParseUser.getCurrentUser();
                 if (currUser != null) {
+                    startService(serviceIntent);
+                    subscribeToPush();// TODO: 24/09/2015 settings
                     syncDebtsToParse(SHOW_LOGIN_ON_ERROR);// FIXME: 06/09/2015 add if
                     if (!currUser.isNew()) {
                         loadFromParse();
@@ -550,6 +550,9 @@ public class MainActivity extends AppCompatActivity {
         // Refresh tab content
         ActionBar actionBar = getSupportActionBar();
         actionBar.selectTab(actionBar.getSelectedTab());// FIXME: 08/10/2015 make sure it refreshes
+
+        // Makes sure the menu is consistent
+        supportInvalidateOptionsMenu();
     }
 
 

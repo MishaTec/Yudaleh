@@ -8,14 +8,14 @@
         Yudaleh - debt managing application.<br/>
         <br/>
         Allows you to: <br/>
-            Easily edit and create new debts,<br/>
-			Set reminders,<br/>
-			View statistics in charts.<br/>
+            * Easily edit and create new debts.<br/>
+			* Set reminders.<br/>
+			* View statistics in charts.<br/>
 		<br/>
 		For logged in users: <br/>
-            Synchronize debt with the owner,<br/>
-			Chat with the owner,<br/>
-			All the data is synced to cloud.<br/>
+            * Synchronize debt with the owner.<br/>
+			* Chat with the owner.<br/>
+			* All the data is synced to cloud.<br/>
     ]]></string>
 
     <string name="no_title_error">Title is required</string>
@@ -115,7 +115,8 @@
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="skip">Skip</string>
-    <string name="skip_sync">Skip sync</string>
+    <string name="phone_error_skip">Skip sync</string>
+    <string name="phone_error_edit">Edit phone</string>
     <string name="no_phone_error">No registered user found by the specified phone.</string>
     <string name="delete">Delete</string>
     <string name="delete_confirm_message">Delete debt?</string>
@@ -137,6 +138,7 @@
     <string name="action_login">Log In</string>
     <string name="login_title">Please log in or sign up to sync your debts to your account.</string>
     <string name="no_items">No items, click + to start adding debts.</string>
+    <string name="no_due_date_subtitle">No due date</string>
     <string name="not_logged_in_title">Guest mode</string>
     <string name="logged_in_title">Welcome, %1$s</string>
 

@@ -80,7 +80,9 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
         TextView debtSubtitle = holder.debtSubtitle;
         ImageView debtImage = holder.debtImage;
 
-        if (debt.getCurrencyPos() != Debt.NON_MONEY_DEBT_CURRENCY) {
+        if (debt.getStatus() == Debt.STATUS_RETURNED) {
+            debtImage.setImageResource(R.drawable.ic_done_black_48dp);
+        } else if (debt.getCurrencyPos() != Debt.NON_MONEY_DEBT_CURRENCY) {
             debtImage.setImageResource(R.drawable.dollar);
         } else {
             debtImage.setImageResource(R.drawable.box_closed_icon);// TODO: 25/09/2015 image / location
@@ -90,7 +92,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
         holder.action1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openEditView(debt);
+
             }
         });
 
@@ -137,7 +139,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
 */
 
 //String extra = "\n"+debt.getUuidString()+"<-"+debt.getOtherUuid(); // REMOVE: 24/09/2015
-        debtTitle.setText(debt.getTitle());
+        debtTitle.setText(debt.getTitle()+" stat: "+debt.getStatus());
         if (debt.isDraft()) {
             debtTitle.setTypeface(null, Typeface.ITALIC);
             debtTitle.setTextColor(Color.RED);// TODO: 02/09/2015 GRAY
@@ -155,16 +157,27 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
             } else if (debt.getStatus() == Debt.STATUS_DELETED) {
                 debtTitle.setTextColor(Color.YELLOW);
             }
-
         }
-        String created = DateFormat.format("MM/dd/yy", debt.getDateCreated().getTime()).toString();
+/*        String created = null;
+        Date createdDate = debt.getDateCreated();
+        if(createdDate!=null) {
+            created = DateFormat.format("MM/dd/yy", debt.getDateCreated().getTime()).toString();
+        }*/// TODO: 10/10/2015 put in edit mode
+        boolean isOutdatedDebt = false;
         String due = null;
         Date dueDate = debt.getDueDate();
         if (dueDate != null) {
             due = DateFormat.format("MM/dd/yy h:mmaa", dueDate.getTime()).toString();
+            if (dueDate.before(new Date())) {
+                due += " (outdated)";
+                isOutdatedDebt = true;
+            }
         }
-        String subtitle = "created: " + created + (due != null ? " due: " + due : "");
+        String subtitle = (due != null ? "Due " + due : "No due date");
         debtSubtitle.setText(subtitle);
+        if (isOutdatedDebt) {
+            debtSubtitle.setTextColor(Color.RED);
+        }
         return view;
     }
 

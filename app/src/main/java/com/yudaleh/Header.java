@@ -1,22 +1,20 @@
 package com.yudaleh;
 
-import android.graphics.Color;
-
 /**
  * Created by Michael on 04/10/2015.
  */
-class Contact {
+class Header {
     private String ownerPhone;
     private String ownerName;
     private double totalMoney;
     private int color;
 
-    Contact(String ownerPhone, String ownerName) {
+    Header(String ownerPhone, String ownerName) {
         this.ownerPhone = ownerPhone;
         this.ownerName = ownerName;
     }
 
-    Contact(String ownerPhone, String ownerName, double totalMoney) {
+    Header(String ownerPhone, String ownerName, double totalMoney) {
         this.ownerPhone = ownerPhone;
         this.ownerName = ownerName;
         this.totalMoney = totalMoney;
@@ -51,10 +49,10 @@ class Contact {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Contact)) {
+        if (!(o instanceof Header)) {
             return false;
         }
-        Contact other = (Contact) o;
+        Header other = (Header) o;
         return EqualsUtil.areEqual(ownerPhone, other.ownerPhone)
                 && EqualsUtil.areEqual(ownerName, other.ownerName)
                 && EqualsUtil.areEqual(totalMoney, other.totalMoney);

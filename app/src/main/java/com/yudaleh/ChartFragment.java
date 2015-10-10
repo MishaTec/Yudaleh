@@ -17,7 +17,6 @@ import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
-import com.github.mikephil.charting.formatter.PercentFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartGestureListener;
@@ -68,7 +67,7 @@ public class ChartFragment extends android.support.v4.app.Fragment {
 
     private TextView minIndexView;
     private final ArrayList<Integer> mColors;
-    private List<Contact> mDataHeaders;
+    private List<Header> mDataHeaders;
     private List mCurrentDataHeaders;
     private HashMap<String, Integer> mOwnerNamesCount;
     private HashMap<String, Integer> mOwnerNamesCountNoPhone;
@@ -131,9 +130,9 @@ public class ChartFragment extends android.support.v4.app.Fragment {
     }
 
     private String getSelectedKey() {
-        if (selectedObject instanceof Contact) {
-            Contact selectedContact = (Contact) selectedObject;
-            return selectedContact.getMapKey();
+        if (selectedObject instanceof Header) {
+            Header selectedHeader = (Header) selectedObject;
+            return selectedHeader.getMapKey();
         } else if (selectedObject instanceof Debt) {
             Debt selectedDebt = (Debt) selectedObject;
             String ownerPhone = selectedDebt.getOwnerPhone();
@@ -332,8 +331,8 @@ public class ChartFragment extends android.support.v4.app.Fragment {
             String phone = debt.getOwnerPhone();
             // TODO: 05/10/2015 dialog for merging non-phone debts
             String name = debt.getOwnerName();
-            Contact contact = new Contact(phone, name);
-            String key = contact.getMapKey();
+            Header header = new Header(phone, name);
+            String key = header.getMapKey();
 
             // TODO: 03/10/2015 update existing adapters
             if (!mDataChildren.containsKey(key)) {
@@ -341,12 +340,12 @@ public class ChartFragment extends android.support.v4.app.Fragment {
                 debtItems.add(debt);
                 mDataChildren.put(key, debtItems);
 
-                mDataHeaders.add(contact);
+                mDataHeaders.add(header);
             } else {
                 mDataChildren.get(key).add(debt);
             }
 
-            for (Contact c : mDataHeaders) {
+            for (Header c : mDataHeaders) {
                 c.setTotalMoney(countTotalMoney(c.getMapKey()));
             }
             if (phone != null) {
@@ -363,9 +362,9 @@ public class ChartFragment extends android.support.v4.app.Fragment {
                 }
             }
         }
-        Collections.sort(mDataHeaders, new Comparator<Contact>() {
+        Collections.sort(mDataHeaders, new Comparator<Header>() {
             @Override
-            public int compare(Contact lhs, Contact rhs) {
+            public int compare(Header lhs, Header rhs) {
                 if (lhs.equals(rhs)) {
                     return 0;
                 }
@@ -405,10 +404,10 @@ public class ChartFragment extends android.support.v4.app.Fragment {
         for (int i = leftIndex, xIndex = 0; i <= rightIndex; i++, xIndex++) {
             Object currItem = mCurrentDataHeaders.get(i);
             double amount = 0;
-            if (currItem instanceof Contact) {
-                Contact currContact = (Contact) currItem;
-                amount = currContact.getTotalMoney();
-                xVals.add(currContact.getOwnerName());
+            if (currItem instanceof Header) {
+                Header currHeader = (Header) currItem;
+                amount = currHeader.getTotalMoney();
+                xVals.add(currHeader.getOwnerName());
                 yVals.add(new Entry((float) amount, xIndex));// TODO: 22/09/2015 make sure it's money debt
                 label = mMaxDebtIndex + " debts";
             } else if (currItem instanceof Debt) {
