@@ -606,10 +606,11 @@ public class EditDebtActivity extends AppCompatActivity {
         JSONObject jsonObject;
         try {
             String title = PUSH_TITLE_RESPONSE;
-            String alert = status + "+" + debt.getUuidString() + "+" + otherUuid;
             jsonObject = new JSONObject();
             jsonObject.put("title", title);
-            jsonObject.put("alert", alert);
+            jsonObject.put(Debt.KEY_STATUS, status);
+            jsonObject.put(Debt.KEY_UUID, debt.getUuidString());
+            jsonObject.put(Debt.KEY_OTHER_UUID, otherUuid);
             jsonObject.put("isNew", isNew);
             jsonObject.put("isResponsePush", true);
 
@@ -737,7 +738,9 @@ public class EditDebtActivity extends AppCompatActivity {
             String alert = debt.getStatus() + "+" + debt.getUuidString() + "+" + debt.getOtherUuid();
             jsonObject = new JSONObject();
             jsonObject.put("title", title);
-            jsonObject.put("alert", alert);
+            jsonObject.put(Debt.KEY_STATUS, debt.getStatus());
+            jsonObject.put(Debt.KEY_UUID, debt.getUuidString());
+            jsonObject.put(Debt.KEY_OTHER_UUID, debt.getOtherUuid());
             jsonObject.put("isNew", isNew);
             jsonObject.put("isResponsePush", false);
 

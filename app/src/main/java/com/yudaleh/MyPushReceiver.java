@@ -27,25 +27,27 @@ import org.json.JSONObject;
 public class MyPushReceiver extends ParsePushBroadcastReceiver {
     private Debt debt;
     private String debtOtherId = null;
+    private String debtId = null;
     private int debtStatus;
     private boolean isResponsePush = false;
     private boolean isNew = true;
 
     @Override
     public void onPushReceive(final Context context, Intent intent) {
-        String alert = null;
         String title = null;
         JSONObject jsonObject;
         try {
             jsonObject = new JSONObject(intent.getStringExtra(MyPushReceiver.KEY_PUSH_DATA));
             isNew = jsonObject.getBoolean("isNew");
             isResponsePush = jsonObject.getBoolean("isResponsePush");
+            debtStatus = jsonObject.getInt(Debt.KEY_STATUS);
+            debtId = jsonObject.getString(Debt.KEY_UUID);
+            debtOtherId = jsonObject.getString(Debt.KEY_OTHER_UUID);
             title = jsonObject.getString("title");
-            alert = jsonObject.getString("alert");
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        if (title == null || alert == null) {
+        if (title == null) {
             return;
         }
         if (!isResponsePush) {
