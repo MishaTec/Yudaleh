@@ -21,7 +21,7 @@ import android.widget.Toast;
 import com.github.jjobes.slidedatetimepicker.SlideDateTimeListener;
 import com.github.jjobes.slidedatetimepicker.SlideDateTimePicker;
 import com.parse.FindCallback;
-import com.parse.ParseAnonymousUtils;
+import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
@@ -69,9 +69,9 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
             holder.debtTitle = (TextView) view
                     .findViewById(R.id.debt_title);
             holder.debtSubtitle = (TextView) view.findViewById(R.id.debt_subtitle);// TODO: 03/10/2015 rename
-            holder.action1 = (Button) view.findViewById(R.id.action_edit);
-            holder.action2 = (Button) view.findViewById(R.id.action_message);
-            holder.action3 = (Button) view.findViewById(R.id.action_call);
+            holder.action1 = (Button) view.findViewById(R.id.action1);
+            holder.action2 = (Button) view.findViewById(R.id.action2);
+            holder.action3 = (Button) view.findViewById(R.id.action3);
             view.setTag(holder);
         } else {
             holder = (ViewHolder) view.getTag();
@@ -92,7 +92,13 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
         holder.action1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                debt.setStatus(Debt.STATUS_RETURNED);
+                debt.setDraft(true);
+                try {
+                    debt.pin(DebtListApplication.DEBT_GROUP_NAME);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -102,7 +108,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
             holder.action2.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    showActionsDialog(debt, false);
+                    showActionsDialog(debt, EditDebtActivity.CODE_USER_EXISTENCE_NOT_CHECKED);
                 }
             });
         } else {
@@ -110,7 +116,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
             holder.action2.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // TODO: 9/26/2015 set phone
+                    openEditView(debt);// TODO: 11/10/2015 just set phone? or we do want the search feature
                 }
             });
         }
@@ -139,7 +145,8 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
 */
 
 //String extra = "\n"+debt.getUuidString()+"<-"+debt.getOtherUuid(); // REMOVE: 24/09/2015
-        debtTitle.setText(debt.getTitle()+" stat: "+debt.getStatus());
+        String titleStr = debt.getTitle()+" stat: "+debt.getStatus();
+        debtTitle.setText(titleStr);
         if (debt.isDraft()) {
             debtTitle.setTypeface(null, Typeface.ITALIC);
             debtTitle.setTextColor(Color.RED);// TODO: 02/09/2015 GRAY
@@ -188,7 +195,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
             @Override
             public void onDateTimeSet(Date date) {
                 date.setSeconds(0);
-                debt.setDueDate(date);
+                debt.setDueDate(date);// TODO: 11/10/2015 save debt
             }
 
             @Override
@@ -216,10 +223,10 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
     /**
      * Show a confirmation push notification dialog, with an option to call the owner.
      */
-    private void showActionsDialog(final Debt debt, boolean isUserExistenceConfirmed) {
+    private void showActionsDialog(final Debt debt, int code) {
         int array;
         ParseUser currUser = ParseUser.getCurrentUser();
-        if (currUser != null && (isUserExistenceConfirmed || EditDebtActivity.isExistingUser(debt.getOwnerPhone()))) {
+        if (currUser != null && EditDebtActivity.isExistingUser(debt.getOwnerPhone(),code)) {
             array = R.array.contact_actions_array_logged_in;
         } else {
             array = R.array.contact_actions_array_logged_out;
@@ -230,7 +237,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         switch (whichButton) {
                             case ACTION_CHAT:
-                                openConversationByPhone(debt);
+                                openConversationByPhone(debt.getOwnerPhone());
                                 break;
                             case ACTION_CALL:
                                 Intent dial = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + debt.getOwnerPhone()));
@@ -252,10 +259,9 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
                 .show();
     }
 
-
-    public void openConversationByPhone(Debt debt) {
+    private void openConversationByPhone(String phone) {
         ParseQuery<ParseUser> query = ParseUser.getQuery();
-        query.whereEqualTo(MainActivity.PARSE_USER_PHONE_KEY, debt.getAuthorPhone());
+        query.whereEqualTo(MainActivity.PARSE_USER_PHONE_KEY, phone);
         query.findInBackground(new FindCallback<ParseUser>() {// TODO: 07/10/2015 getFirst
             public void done(List<ParseUser> users, com.parse.ParseException e) {
                 if (e == null) {

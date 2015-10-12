@@ -37,8 +37,8 @@ public class ListViewFragment extends android.support.v4.app.Fragment {
             public ParseQuery<Debt> create() {
                 ParseQuery<Debt> query = Debt.getQuery();
                 query.whereEqualTo(Debt.KEY_TAB_TAG, getTag());
-                query.orderByAscending("createdAt");
-                query.fromLocalDatastore();
+                query.orderByDescending(Debt.KEY_DATE_CREATED);
+                query.fromPin(DebtListApplication.DEBT_GROUP_NAME);
                 return query;
             }
         };

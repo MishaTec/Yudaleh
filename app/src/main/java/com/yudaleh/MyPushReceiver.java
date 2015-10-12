@@ -26,38 +26,51 @@ import org.json.JSONObject;
  */
 public class MyPushReceiver extends ParsePushBroadcastReceiver {
     private Debt debt;
-    private String debtId;
-    private String debtOtherId;
+    private String debtOtherId = null;
     private int debtStatus;
     private boolean isResponsePush = false;
+    private boolean isNew = true;
 
     @Override
     public void onPushReceive(final Context context, Intent intent) {
         String alert = null;
+        String title = null;
+        JSONObject jsonObject;
         try {
-            alert = (new JSONObject(intent.getStringExtra(MyPushReceiver.KEY_PUSH_DATA))).getString("alert");
+            jsonObject = new JSONObject(intent.getStringExtra(MyPushReceiver.KEY_PUSH_DATA));
+            isNew = jsonObject.getBoolean("isNew");
+            isResponsePush = jsonObject.getBoolean("isResponsePush");
+            title = jsonObject.getString("title");
+            alert = jsonObject.getString("alert");
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        if (alert == null) {
+        if (title == null || alert == null) {
             return;
         }
+        if (!isResponsePush) {
+            if (title.equals(EditDebtActivity.PUSH_TITLE_NEW)) {
+                title = "Debt created";
+            } else {
+                title = "Debt modified";
+            }
+        }
         String[] alertParts = alert.split("\\+");
+        final String debtId;
         if (alertParts.length == 3) {
-            isResponsePush = true;
             debtStatus = Integer.parseInt(alertParts[0]);
             debtOtherId = alertParts[1];
             debtId = alertParts[2];
         } else {
-            isResponsePush = false;
-            debtId = alert;
+            debtId = alert;// REMOVE: 12/10/2015
         }
         ParseQuery<Debt> query = Debt.getQuery();
-        query.whereEqualTo(Debt.KEY_UUID, debtId);
-        if(isResponsePush) {
+        query.whereEqualTo(Debt.KEY_UUID, debtOtherId);
+        if (isResponsePush) {
             query.fromLocalDatastore();
-        }// TODO: 08/10/2015 modified debt dialog
-        query.getFirstInBackground(new GetCallback<Debt>() {
+        }
+        final String pushAlert = title;
+        query.getFirstInBackground(new GetCallback<Debt>() {// TODO: 12/10/2015 transfer all by JSON (only main keys - others will be cloned on edit)
 
             @Override
             public void done(Debt object, ParseException e) {
@@ -66,32 +79,37 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
                     return;
                 }
                 debt = object;
-                String alert = "Friend's debt created";
+                String pushText = debt.getTitle();
+                String pushTitle;
+                if (debt.getTabTag().equals(Debt.OWE_ME_TAG)) { // reversed logic
+                    pushTitle = "You owe " + debt.getAuthorName();
+                } else {
+                    pushTitle = debt.getAuthorName() + " owes you";
+                }
                 if (isResponsePush) { //remove notification
-                    alert = "confirmed";
+                    pushTitle = pushAlert;
+                    pushText = null;
                     debt.setStatus(debtStatus);// TODO: 16/09/2015 save
                     debt.setOtherUuid(debtOtherId);// TODO: 16/09/2015 save
                     if (debtStatus == Debt.STATUS_RETURNED) {
+                        debt.setDueDate(null); // TODO: 12/10/2015 confirm dialog
                         cancelAlarm(context, debt);
                     }
 
-                    debt.saveInBackground(new SaveCallback() {
+                    debt.setDraft(true);
+                    debt.pinInBackground(DebtListApplication.DEBT_GROUP_NAME, new SaveCallback() {
                         @Override
                         public void done(ParseException e) {
-                            Intent intent = new Intent(context, MainActivity.class);
-                            intent.putExtra(Debt.KEY_TAB_TAG, debt.getTabTag());
-                            intent.putExtra("isResponsePush", true);
-                            context.startActivity(intent);// todo use broadcast instead or update current if opened (same fragment)
+                            if (e == null) {
+                                Intent intent = new Intent(context, MainActivity.class);
+                                intent.putExtra(Debt.KEY_TAB_TAG, debt.getTabTag());
+                                intent.putExtra("isResponsePush", true);
+                                // todo use broadcast, or update current if opened (same fragment)
+                            }
                         }
                     });
-
-                    return;
                 }
-                if (debt.getTabTag().equals(Debt.OWE_ME_TAG)) { // reversed logic
-                    createNotification(context, "You owe " + debt.getAuthorName(), debt.getTitle(), alert);
-                } else {
-                    createNotification(context, debt.getAuthorName() + " owes you", debt.getTitle(), alert);
-                }
+                createNotification(context, pushTitle, pushText, pushAlert);
             }
 
         });
@@ -108,14 +126,13 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
     private void createNotification(Context context, String title, String text, String alert) {
         String uuidString = debt.getUuidString();
         int alarmId = uuidString.hashCode();
-        String authorPhone = debt.getAuthorPhone();
-        String authorName = debt.getAuthorName();
-
         Intent intent = new Intent(context, EditDebtActivity.class);
 //        intent.setFlags(/*Intent.FLAG_ACTIVITY_REORDER_TO_FRONT*/ /*Intent.FLAG_ACTIVITY_SINGLE_TOP | */Intent.FLAG_ACTIVITY_CLEAR_TOP);// REMOVE: 14/09/2015
-        intent.putExtra(Debt.KEY_UUID, uuidString);
+        intent.putExtra(Debt.KEY_UUID, debtOtherId);
+        intent.putExtra(Debt.KEY_OTHER_UUID, uuidString);
         intent.putExtra(Debt.KEY_TAB_TAG, debt.getTabTag());
         intent.putExtra("fromPush", true);
+        intent.putExtra("isNew", isNew);
 
         PendingIntent notificationIntent = PendingIntent.getActivity(context, 0, intent
                 , PendingIntent.FLAG_UPDATE_CURRENT);
@@ -127,6 +144,16 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
                 .setContentIntent(notificationIntent)
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
                 .setAutoCancel(true);
+        addContactActions(context, builder);
+        Notification notification = builder.build();
+        NotificationManager mNotificationManager = (NotificationManager) context
+                .getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(alarmId, notification); // make sure alarmId is unique
+    }
+
+    private void addContactActions(Context context, Notification.Builder builder) {
+        String authorPhone = debt.getAuthorPhone();
+        String authorName = debt.getAuthorName();
         if (authorPhone != null) {
             // Create dialing action
             String callTitle = "Call " + authorName;
@@ -159,10 +186,6 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
                 builder.addAction(smsIcon, smsTitle, notificationSmsIntent);
             }
         }
-        Notification notification = builder.build();
-        NotificationManager mNotificationManager = (NotificationManager) context
-                .getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(alarmId, notification); // make sure alarmId is unique
     }
 
     /**

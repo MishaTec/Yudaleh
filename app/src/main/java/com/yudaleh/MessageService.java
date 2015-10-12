@@ -26,7 +26,7 @@ public class MessageService extends Service implements SinchClientListener {
     private MessageClient messageClient = null;
     private String currentUserId;
     private LocalBroadcastManager broadcaster;
-    private Intent broadcastIntent = new Intent(".MainActivity");
+    private Intent broadcastIntent = new Intent("com.yudaleh.MainActivity");
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -119,6 +119,9 @@ public class MessageService extends Service implements SinchClientListener {
 
     @Override
     public void onDestroy() {
+        if (sinchClient == null) {
+            return;
+        }
         sinchClient.stopListeningOnActiveConnection();// FIXME: 24/09/2015 null exception
         sinchClient.terminate();
     }

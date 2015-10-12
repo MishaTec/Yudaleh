@@ -10,21 +10,21 @@
         android:tag="back">
 
         <Button
-            android:id="@+id/action_edit"
+            android:id="@+id/action1"
             style="@style/ListButtonAction"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/action1_text" />
 
         <Button
-            android:id="@+id/action_message"
+            android:id="@+id/action2"
             style="@style/ListButtonAction"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/action2_text_no_phone" />
 
         <Button
-            android:id="@+id/action_call"
+            android:id="@+id/action3"
             style="@style/ListButtonAction"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

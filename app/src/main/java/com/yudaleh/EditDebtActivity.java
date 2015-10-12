@@ -30,6 +30,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
@@ -55,6 +56,9 @@ import com.parse.ParseUser;
 import com.parse.SaveCallback;
 import com.parse.SendCallback;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -69,9 +73,12 @@ public class EditDebtActivity extends AppCompatActivity {
 
     private static final int FLAG_FORCE_BACK_TO_MAIN = 0x00040000;
     private static final int FLAG_SET_ALARM = 0X00020000;
-    private static final int USER_EXISTENCE_CONFIRMED = 0X00060000;;
-    private static final int USER_EXISTENCE_NOT_CONFIRMED = 0X00080000;;
-    private static final int USER_EXISTENCE_NOT_CHECKED = 0X00070000;;
+    static final int CODE_USER_EXISTENCE_CONFIRMED = 0;
+    static final int CODE_USER_EXISTENCE_DENIED = 1;
+    static final int CODE_USER_EXISTENCE_NOT_CHECKED = 2;
+    static final String PUSH_TITLE_NEW = "New";
+    static final String PUSH_TITLE_MODIFIED = "Modified";
+    static final String PUSH_TITLE_RESPONSE = "Response";
 
     private Button remindButton;
     private CheckBox remindCheckBox;
@@ -87,6 +94,7 @@ public class EditDebtActivity extends AppCompatActivity {
     private Spinner spinner1;
     private Debt debt;
     private String debtId;
+    private String debtOtherId;
     private String debtTabTag;
     private boolean isFromPush;
     private boolean isNew;
@@ -94,6 +102,7 @@ public class EditDebtActivity extends AppCompatActivity {
 
     private Debt beforeChange;
     private int currencyPos;
+    private boolean isSendPushToOwner = false;
 
 
     //**********************************************************************************************
@@ -190,8 +199,6 @@ public class EditDebtActivity extends AppCompatActivity {
                 if (isModified) {
                     showSaveChangesConfirm();
                     return true;
-                } else {
-                    cancelActivity();
                 }
                 break;
             case R.id.action_delete:// TODO: 24/09/2015 confirm dialog
@@ -202,21 +209,20 @@ public class EditDebtActivity extends AppCompatActivity {
                     break;
                 }
                 setDebtFieldsAfterEditing();
-                boolean isExistingUser = isExistingUser(debt.getOwnerPhone());
-
-                if ((isNew || isModified) && debt.getOwnerPhone() != null) {
-
+                isSendPushToOwner = false;
+                String phone = debt.getOwnerPhone();
+                if ((isNew || isModified) && phone != null) {
                     if (pushCheckBox.isChecked()) {// TODO: 24/09/2015 settings
-                        if (isExistingUser) {
-                            if (!isFromPush) {
-                                sendPushToOwner();// TODO: 9/30/2015  auto receive push if modified (update existing)
+                        if (isExistingUser(phone)) {
+                            if (!isFromPush) {// TODO: 12/10/2015 send anyway?
+                                isSendPushToOwner = true;
                             }
-                            showActionsDialog(true);
+                            showActionsDialog(CODE_USER_EXISTENCE_CONFIRMED);
                         } else {
                             showNoPhoneErrorDialog();
                         }
                     } else {
-                        showActionsDialog(false);
+                        showActionsDialog(CODE_USER_EXISTENCE_NOT_CHECKED);
                     }
 
                 } else {
@@ -235,7 +241,7 @@ public class EditDebtActivity extends AppCompatActivity {
                 .setPositiveButton(R.string.phone_error_skip, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {// TODO: 10/10/2015 sync later
-                        showActionsDialog(false);
+                        showActionsDialog(CODE_USER_EXISTENCE_DENIED);
                     }
                 })
                 .setNegativeButton(R.string.phone_error_edit, new DialogInterface.OnClickListener() {
@@ -248,13 +254,26 @@ public class EditDebtActivity extends AppCompatActivity {
     }
 
     private void showDeleteConfirm() {
+        int message;
+        if (isFromPush) {
+            message = R.string.deny_confirm_message;
+        } else {
+            message = R.string.delete_confirm_message;
+        }
         (new AlertDialog.Builder(EditDebtActivity.this))
-                .setMessage(R.string.delete_confirm_message)
+                .setMessage(message)
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (isExistingUser(debt.getOwnerPhone())) {
-                            sendPushResponse(debt.getOtherUuid(), Debt.STATUS_DELETED);
+                        String ownerPhone = debt.getOwnerPhone();
+                        if (isExistingUser(ownerPhone)) {
+                            int status;
+                            if (isFromPush) {
+                                status = Debt.STATUS_DENIED;
+                            } else {
+                                status = Debt.STATUS_DELETED;
+                            }
+                            sendPushResponse(ownerPhone, status);
                         }
                         cancelAlarm(debt);
                         // The debt will be deleted eventually but will immediately be excluded from mQuery results.
@@ -289,14 +308,26 @@ public class EditDebtActivity extends AppCompatActivity {
                 .show();
     }
 
-    static boolean isExistingUser(String phone) {
+    static boolean isExistingUser(String phone, int code) {
+        switch (code) {
+            case CODE_USER_EXISTENCE_CONFIRMED:
+                return true;
+            case CODE_USER_EXISTENCE_DENIED:
+                return false;
+            default:
+                return isExistingUser(phone);
+        }
+    }
+
+
+    static boolean isExistingUser(String phone) {// TODO: 11/10/2015 setProgressBarIndeterminateVisibility - must be non-static
         if (phone == null) {
             return false;
         }
         ParseQuery<ParseUser> query = ParseUser.getQuery();
         query.whereEqualTo(MainActivity.PARSE_USER_PHONE_KEY, phone);
         try {
-            query.getFirst();
+            query.count();
             return true;
         } catch (ParseException e) {
             return false;
@@ -330,7 +361,7 @@ public class EditDebtActivity extends AppCompatActivity {
         if (isModified) {
             showSaveChangesConfirm();
         } else {
-            cancelActivity();
+            super.onBackPressed();
         }
     }
 
@@ -338,7 +369,9 @@ public class EditDebtActivity extends AppCompatActivity {
      * Extracts the extras from the <code>Intent</code>.
      */
     private void fetchExtras() {
+        isNew = getIntent().getBooleanExtra("isNew", true);
         debtId = getIntent().getStringExtra(Debt.KEY_UUID);
+        debtOtherId = getIntent().getStringExtra(Debt.KEY_OTHER_UUID);
         debtTabTag = getIntent().getStringExtra(Debt.KEY_TAB_TAG);
         isFromPush = getIntent().getBooleanExtra("fromPush", false);
     }
@@ -381,6 +414,9 @@ public class EditDebtActivity extends AppCompatActivity {
      * @param flags the <code>flags</code> parameter for the {@link #wrapUp}.
      */
     private void saveDebt(final int flags) {
+        if (isFromPush) {
+            debt.setStatus(Debt.STATUS_CONFIRMED);
+        }
         debt.pinInBackground(DebtListApplication.DEBT_GROUP_NAME,
                 new SaveCallback() {
 
@@ -391,7 +427,9 @@ public class EditDebtActivity extends AppCompatActivity {
                         }
                         if (e == null) {
                             if (isFromPush) {
-                                sendPushResponse(debt.getOtherUuid(), Debt.STATUS_CONFIRMED);
+                                sendPushResponse(debt.getOwnerPhone(), Debt.STATUS_CONFIRMED);
+                            } else if (isSendPushToOwner) {
+                                sendPushToOwner(debt.getOwnerPhone());
                             }
                             wrapUp(flags);
                         } else {
@@ -424,7 +462,6 @@ public class EditDebtActivity extends AppCompatActivity {
             debt.setAuthorName(currUser.getString(MainActivity.PARSE_USER_NAME_KEY));
             debt.setAuthorPhone(currUser.getString(MainActivity.PARSE_USER_PHONE_KEY));
         }
-        debt.setStatus(Debt.STATUS_CREATED);
         debt.setCurrencyPos(currencyPos);// TODO: 06/10/2015 include in changes detection
         debt.setMoneyAmountByTitle();
         setTitleFormattedAsMoneyAmount(currencyPos);
@@ -497,14 +534,11 @@ public class EditDebtActivity extends AppCompatActivity {
      * @throws ParseException
      */
     private void cloneDebtFromPush() throws ParseException {
-        debt = new Debt();
-        debt.setUuidString();
-
         ParseQuery<Debt> query = Debt.getQuery();
-        query.whereEqualTo(Debt.KEY_UUID, debtId);
+        query.whereEqualTo(Debt.KEY_UUID, debtOtherId);
 
         Debt other = query.getFirst();
-        debt.setOtherUuid(debtId);
+        debt.setOtherUuid(debtOtherId);
         debt.setDateCreated(other.getDateCreated());
         debt.setTabTag(reverseTag(other.getTabTag()));
         debtTitleText.setText(other.getTitle());
@@ -526,8 +560,16 @@ public class EditDebtActivity extends AppCompatActivity {
      */
     private void prepareDebtForEditing() throws ParseException {
         if (isFromPush) {
-            isNew = false;
-            cloneDebtFromPush();
+            if (isNew) {
+                debt = new Debt();
+                debt.setUuidString();
+                debt.setStatus(Debt.STATUS_CONFIRMED);
+                cloneDebtFromPush();
+            } else {
+                loadExistingDebt();
+                cloneDebtFromPush();
+            }
+
         } else if (debtId != null) {
             isNew = false;
             loadExistingDebt();
@@ -537,6 +579,7 @@ public class EditDebtActivity extends AppCompatActivity {
             debt.setDateCreated(new Date());
             debt.setUuidString();
             debt.setTabTag(debtTabTag);
+            debt.setStatus(Debt.STATUS_CREATED);
         }
         beforeChange = debt.createClone();
     }
@@ -549,42 +592,55 @@ public class EditDebtActivity extends AppCompatActivity {
     /**
      * Synchronize the status of the other end
      *
-     * @param otherUuid of the debt on the destination side
      * @param status    to deliver to the other end
      */
-    private void sendPushResponse(String otherUuid, final int status) {
+    private void sendPushResponse(String ownerPhone, final int status) {
+        String otherUuid = debt.getOtherUuid();
+        if (ownerPhone == null) {
+            return;
+        }
         if (otherUuid == null) {
             return;
         }
-        ParsePush push = new ParsePush();
-        String phone = debt.getOwnerPhone();
-        if (phone == null) {
-            return;
-        }
-        push.setChannel(MainActivity.USER_CHANNEL_PREFIX + debt.getOwnerPhone().replaceAll("[^0-9]+", ""));
-        // TODO: 06/10/2015  Gson gson = new Gson(); // Or use new GsonBuilder().create(); /*gson.toJson(o)*/
-        // TODO: 14/09/2015 use proxy (add image, date): https://gist.github.com/janakagamini/f5c63ea27bee8b7b7581
-        push.setMessage(status + "+" + debt.getUuidString() + "+" + otherUuid);
-        push.sendInBackground(new SendCallback() {
-            @Override
-            public void done(ParseException e) {
-                if (e == null) {
-                    debt.setStatus(status);
-                } else {
-                    Toast.makeText(getApplicationContext(),
-                            "Push not sent: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();// REMOVE: 15/09/2015
+
+        JSONObject jsonObject;
+        try {
+            String title = PUSH_TITLE_RESPONSE;
+            String alert = status + "+" + debt.getUuidString() + "+" + otherUuid;
+            jsonObject = new JSONObject();
+            jsonObject.put("title", title);
+            jsonObject.put("alert", alert);
+            jsonObject.put("isNew", isNew);
+            jsonObject.put("isResponsePush", true);
+
+            debt.setStatus(status);
+            ParsePush push = new ParsePush();
+            push.setChannel(MainActivity.USER_CHANNEL_PREFIX + ownerPhone.replaceAll("[^0-9]+", ""));
+            // TODO: 06/10/2015  Gson gson = new Gson(); // Or use new GsonBuilder().create(); /*gson.toJson(o)*/
+            // TODO: 14/09/2015 use proxy (add image, date): https://gist.github.com/janakagamini/f5c63ea27bee8b7b7581
+            push.setData(jsonObject);
+            push.sendInBackground(new SendCallback() {
+                @Override
+                public void done(ParseException e) {
+                    if (e == null) {
+                    } else {
+                        Toast.makeText(getApplicationContext(),
+                                "Push not sent: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show();// REMOVE: 15/09/2015
+                    }
                 }
-            }
-        });
+            });
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
      * Shows a dialog with contact actions: call, sms, chat.
      *
-     * @param isUserExistenceConfirmed whether {@link #isExistingUser(String)} already returned true
+     * @param userExistenceCode indicated the result of previous call to {@link #isExistingUser}
      */
-    private void showActionsDialog(int flags) {
+    private void showActionsDialog(int userExistenceCode) {
         int title;
         if (isNew) {
             title = R.string.contact_actions_dialog_title_new_debt;
@@ -593,7 +649,8 @@ public class EditDebtActivity extends AppCompatActivity {
         }
         int array;
         ParseUser currUser = ParseUser.getCurrentUser();
-        if (currUser != null && (isUserExistenceConfirmed || isExistingUser(debt.getOwnerPhone()))) {
+        final String phone = debt.getOwnerPhone();
+        if (currUser != null && isExistingUser(phone, userExistenceCode)) {
             array = R.array.contact_actions_array_logged_in;
         } else {
             array = R.array.contact_actions_array_logged_out;
@@ -608,14 +665,14 @@ public class EditDebtActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         switch (whichButton) {
                             case DebtListAdapter.ACTION_CHAT:
-                                openConversationByPhone();
+                                openConversationByPhone(phone);
                                 break;
                             case DebtListAdapter.ACTION_CALL:
-                                Intent dial = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + debt.getOwnerPhone()));
+                                Intent dial = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phone));
                                 startActivity(dial);
                                 break;
                             case DebtListAdapter.ACTION_SMS:
-                                Intent sms = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", debt.getOwnerPhone(), null));
+                                Intent sms = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", phone, null));
                                 startActivity(sms);
                                 break;
 
@@ -638,9 +695,10 @@ public class EditDebtActivity extends AppCompatActivity {
                 .show();
     }
 
-    public void openConversationByPhone() {
+
+    private void openConversationByPhone(String phone) {
         ParseQuery<ParseUser> query = ParseUser.getQuery();
-        query.whereEqualTo(MainActivity.PARSE_USER_PHONE_KEY, debt.getAuthorPhone());
+        query.whereEqualTo(MainActivity.PARSE_USER_PHONE_KEY, phone);
         query.findInBackground(new FindCallback<ParseUser>() {
             public void done(List<ParseUser> user, com.parse.ParseException e) {
                 if (e == null) {
@@ -658,32 +716,52 @@ public class EditDebtActivity extends AppCompatActivity {
 
     /**
      * Sends the owner a push notification about the debt.
+     *
+     * @param ownerPhone owner's number
      */
-    private void sendPushToOwner() {
-        // TODO: 14/09/2015 send only if data was changed
-        ParsePush push = new ParsePush();
-        String phone = debt.getOwnerPhone();
-        if (phone == null) {
+    private void sendPushToOwner(String ownerPhone) {
+        if (ownerPhone == null) {
             return;
         }
-        push.setChannel(MainActivity.USER_CHANNEL_PREFIX + phone.replaceAll("[^0-9]+", ""));
-        Gson gson = new Gson(); // Or use new GsonBuilder().create();
-        // TODO: 14/09/2015 use proxy (add image, date): https://gist.github.com/janakagamini/f5c63ea27bee8b7b7581
-        push.setMessage(debt.getUuidString()/*gson.toJson(o)*/);///**/);
-        push.sendInBackground(new SendCallback() {
-            @Override
-            public void done(ParseException e) {
-                if (e == null) {
-                    debt.setStatus(Debt.STATUS_PENDING);
-                    // TODO: 16/09/2015 save
-                } else {
-                    Toast.makeText(getApplicationContext(),
-                            "Push not sent: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();// REMOVE: 15/09/2015
 
+        String title;
+        if (isNew) {
+            title = PUSH_TITLE_NEW;
+        } else {
+            title = PUSH_TITLE_MODIFIED;
+        }
+        // TODO: 14/09/2015 use proxy (add image, date): https://gist.github.com/janakagamini/f5c63ea27bee8b7b7581
+        Gson gson = new Gson(); //todo Or use new GsonBuilder().create();
+        JSONObject jsonObject;
+        try {
+            String alert = debt.getStatus() + "+" + debt.getUuidString() + "+" + debt.getOtherUuid();
+            jsonObject = new JSONObject();
+            jsonObject.put("title", title);
+            jsonObject.put("alert", alert);
+            jsonObject.put("isNew", isNew);
+            jsonObject.put("isResponsePush", false);
+
+            debt.setStatus(Debt.STATUS_PENDING);
+            ParsePush push = new ParsePush();
+            push.setChannel(MainActivity.USER_CHANNEL_PREFIX + ownerPhone.replaceAll("[^0-9]+", ""));
+            push.setData(jsonObject/*gson.toJson(o)*/);///**/);
+            push.sendInBackground(new SendCallback() {
+                @Override
+                public void done(ParseException e) {
+                    if (e == null) {
+                        // TODO: 16/09/2015 save
+                    } else {
+                        Toast.makeText(getApplicationContext(),
+                                "Push not sent: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show();// REMOVE: 15/09/2015
+
+                    }
                 }
-            }
-        });
+            });
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
     }
 
 

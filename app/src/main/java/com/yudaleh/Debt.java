@@ -8,7 +8,10 @@ import com.parse.ParseClassName;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -18,10 +21,10 @@ public class Debt extends ParseObject {
     static final String KEY_UUID = "uuid";
     static final String KEY_DATE_CREATED = "dateCreated";
     static final String KEY_IS_DRAFT = "isDraft";
-//    static final String KEY_AUTHOR = "author";// REMOVE: 07/10/2015
+    //    static final String KEY_AUTHOR = "author";// REMOVE: 07/10/2015
     static final String KEY_AUTHOR_NAME = "authorName";
     static final String KEY_AUTHOR_PHONE = "authorPhone";
-    static final String KEY_OTHER_UUID = "origUuid";
+    static final String KEY_OTHER_UUID = "otherUuid";
     static final String KEY_DUE_DATE = "dueDate";
     static final String KEY_DESCRIPTION = "description";
     static final String KEY_TITLE = "title";
@@ -39,9 +42,10 @@ public class Debt extends ParseObject {
 
     static final int STATUS_CREATED = 1;
     static final int STATUS_PENDING = 2;
-    static final int STATUS_CONFIRMED = 3;
-    static final int STATUS_RETURNED = 4;
-    static final int STATUS_DELETED = 5;
+    static final int STATUS_DENIED = 3;
+    static final int STATUS_CONFIRMED = 4;
+    static final int STATUS_RETURNED = 5; // TODO: 11/10/2015 separate column
+    static final int STATUS_DELETED = 6;
 
     String getTabTag() {
         return getString(KEY_TAB_TAG);
@@ -274,7 +278,7 @@ public class Debt extends ParseObject {
         return clone;
     }
 
-    void copyFrom(Debt other){
+    void copyFrom(Debt other) {
         Set<String> otherKeys = other.keySet();
 
         for (String key : otherKeys) {
@@ -282,10 +286,15 @@ public class Debt extends ParseObject {
         }
 
         // Make sure there are no extra keys
+        // 2 step - prevents concurrent exception
+        List<String> keysToRemove = new ArrayList<>();
         for (String key : keySet()) {
             if (!otherKeys.contains(key)) {
-                remove(key);
+                keysToRemove.add(key);
             }
+        }
+        for (String key : keysToRemove) {
+            remove(key);
         }
     }
 

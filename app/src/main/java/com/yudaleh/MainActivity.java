@@ -94,20 +94,18 @@ public class MainActivity extends AppCompatActivity {
         serviceIntent = new Intent(getApplicationContext(), MessageService.class);
         ParseUser currUser = ParseUser.getCurrentUser();
 
+        receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Boolean success = intent.getBooleanExtra("success", false);
+                if (!success) {
+                    Toast.makeText(getApplicationContext(), "Messaging service failed to start", Toast.LENGTH_LONG).show();
+                }
+            }
+        };
+        LocalBroadcastManager.getInstance(this).registerReceiver(receiver, new IntentFilter("com.yudaleh.MainActivity"));
 
         if (currUser != null) {
-            receiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    Boolean success = intent.getBooleanExtra("success", false);
-                    if (!success) {
-                        Toast.makeText(getApplicationContext(), "Messaging service failed to start", Toast.LENGTH_LONG).show();
-                    }
-                }
-            };
-
-            LocalBroadcastManager.getInstance(this).registerReceiver(receiver, new IntentFilter(".MainActivity"));
-
             startService(serviceIntent);
         }
 
@@ -166,14 +164,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onBackPressed() {
-        if (backtoast != null && backtoast.getView().getWindowToken() != null) {
+        if (isChartMode) {
+            switchDisplayMode();
+        }
+        else if (backtoast != null && backtoast.getView().getWindowToken() != null) {
             super.onBackPressed();
             finish();
         } else {
             backtoast = Toast.makeText(this, " Press Back again to Exit ", Toast.LENGTH_SHORT);
             backtoast.show();
         }
-
     }
 /*    @Override
     protected void onNewIntent(Intent intent) {
@@ -297,13 +297,11 @@ public class MainActivity extends AppCompatActivity {
 
         chartModeMenuItem.setVisible(!isChartMode);
         listModeMenuItem.setVisible(isChartMode);
-
         syncMenuItem.setVisible(isSyncOptionVisible);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        ActionBar actionBar = getSupportActionBar();
         switch (item.getItemId()) {
             case R.id.action_settings:
                 Intent intent = new Intent(this, SettingsActivity.class);
@@ -315,22 +313,8 @@ public class MainActivity extends AppCompatActivity {
                 break;
 
             case R.id.action_chart_mode:
-                isChartMode = true;
-                chartModeMenuItem.setVisible(false);
-                listModeMenuItem.setVisible(true);
-                if (actionBar != null && actionBar.getSelectedTab() != null) {
-                    actionBar.getSelectedTab().select();
-                }
-
-                break;
-
             case R.id.action_list_mode:
-                isChartMode = false;
-                chartModeMenuItem.setVisible(true);
-                listModeMenuItem.setVisible(false);
-                if (actionBar != null && actionBar.getSelectedTab() != null) {
-                    actionBar.getSelectedTab().select();
-                }
+                switchDisplayMode();
                 break;
 
             case R.id.action_logout:
@@ -343,8 +327,8 @@ public class MainActivity extends AppCompatActivity {
             case R.id.about:
                 TextView content = (TextView) getLayoutInflater().inflate(R.layout.about_view, null);
                 content.setMovementMethod(LinkMovementMethod.getInstance());
-
-                content.setText(Html.fromHtml(getString(R.string.about_body)));// UNCOMMENT: 14/09/2015
+                countSavedAndPinnedObjects();
+                content.setText(Html.fromHtml(getString(R.string.about_body)) + "\npinned: " + numPinned + "\nsaved: " + numSaved);// TODO: 11/10/2015 clean
                 // REMOVE: 07/09/2015 info
 /*                ParseUser curr = ParseUser.getCurrentUser();
                 if (curr != null) {
@@ -393,45 +377,47 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void switchDisplayMode() {
+        isChartMode = !isChartMode;
+        chartModeMenuItem.setVisible(!isChartMode);
+        listModeMenuItem.setVisible(isChartMode);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null && actionBar.getSelectedTab() != null) {
+            actionBar.getSelectedTab().select();
+        }
+    }
+
     private void countSavedAndPinnedObjects() {
+        // Count pinned:
         ParseQuery<Debt> query = Debt.getQuery();
         query.fromPin(DebtListApplication.DEBT_GROUP_NAME);
-        query.findInBackground(new FindCallback<Debt>() {
-            public void done(List<Debt> debts, ParseException e) {
-                if (debts != null) {
-                    numPinned = debts.size();
-                } else {
-                    numPinned = -1;
-                }
-                if (e != null) {
-                    numPinned = -2;
-                }
-            }
-        });
+        List<Debt> debts;
+        try {
+            debts = query.find();
+            numPinned = debts.size();
+        } catch (ParseException e) {
+            numPinned = -1;
+        }
+
+        // Count saved:
         ParseUser currUser = ParseUser.getCurrentUser();
         if (currUser == null) {
-            numSaved = -3;
+            numSaved = -2;
             return;
         }
         query = Debt.getQuery();
         query.whereEqualTo(Debt.KEY_AUTHOR_PHONE, currUser.getString(PARSE_USER_PHONE_KEY));
-        query.findInBackground(new FindCallback<Debt>() {
-            public void done(List<Debt> debts, ParseException e) {
-                if (debts != null) {
-                    numSaved = debts.size();
-                } else {
-                    numSaved = -1;
-                }
-                if (e != null) {
-                    numSaved = -2;
-                }
-            }
-        });
+        try {
+            debts = query.find();
+            numSaved = debts.size();
+        } catch (ParseException e) {
+            numSaved = -1;
+        }
     }
 
     private void cancelAllAlarmsOnPinnedObjects() {
         ParseQuery<Debt> query = Debt.getQuery();
-        query.fromPin(DebtListApplication.DEBT_GROUP_NAME);
+        query.fromPin(DebtListApplication.DEBT_GROUP_NAME); // FIXME: 11/10/2015 local datastore
         query.findInBackground(new FindCallback<Debt>() {
             public void done(List<Debt> debts, ParseException e) {
                 if (debts != null) {
