@@ -275,7 +275,11 @@ public class Debt extends ParseObject {
     }
 
     public void setPhotoFile(ParseFile file) {
-        put(KEY_PHOTO, file);
+        if (file != null) {
+            put(KEY_PHOTO, file);
+        } else {
+            remove(KEY_PHOTO);
+        }
     }
 
     public ParseFile getThumbFile() {
@@ -283,7 +287,11 @@ public class Debt extends ParseObject {
     }
 
     public void setThumbFile(ParseFile file) {
-        put(KEY_THUMBNAIL, file);
+        if (file != null) {
+            put(KEY_THUMBNAIL, file);
+        } else {
+            remove(KEY_THUMBNAIL);
+        }
     }
 
     static ParseQuery<Debt> getQuery() {
