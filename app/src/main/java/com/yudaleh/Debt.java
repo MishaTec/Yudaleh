@@ -5,6 +5,7 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.parse.ParseClassName;
+import com.parse.ParseFile;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 
@@ -32,7 +33,10 @@ public class Debt extends ParseObject {
     static final String KEY_MONEY_AMOUNT = "money";
     static final String KEY_OWNER_NAME = "ownerName";
     static final String KEY_STATUS = "status";
+    static final String KEY_IS_RETURNED = "isReturned";
     static final String KEY_OWNER_PHONE = "ownerPhone";
+    static final String KEY_PHOTO = "photo";
+    static final String KEY_THUMBNAIL = "thumb";
     static final String KEY_TAB_TAG = "tabTag";
 
     static final int NON_MONEY_DEBT_CURRENCY = 0;
@@ -40,12 +44,12 @@ public class Debt extends ParseObject {
     static final String I_OWE_TAG = "iOwe";
     static final String OWE_ME_TAG = "oweMe";
 
+    static final int STATUS_NO_STATUS = 0;
     static final int STATUS_CREATED = 1;
     static final int STATUS_PENDING = 2;
     static final int STATUS_DENIED = 3;
     static final int STATUS_CONFIRMED = 4;
-    static final int STATUS_RETURNED = 5; // TODO: 11/10/2015 separate column
-    static final int STATUS_DELETED = 6;
+    static final int STATUS_DELETED = 5;
 
     String getTabTag() {
         return getString(KEY_TAB_TAG);
@@ -118,6 +122,10 @@ public class Debt extends ParseObject {
 
     void setStatus(int status) {
         put(KEY_STATUS, status);
+    }
+
+    public void toggleReturned() {
+        setReturned(!isReturned());
     }
 
     String getOwnerPhone() {
@@ -245,6 +253,14 @@ public class Debt extends ParseObject {
         put(KEY_IS_DRAFT, isDraft);
     }
 
+    boolean isReturned() {
+        return getBoolean(KEY_IS_RETURNED);
+    }
+
+    void setReturned(boolean isReturned) {
+        put(KEY_IS_RETURNED, isReturned);
+    }
+
     void setUuidString() {
         UUID uuid = UUID.randomUUID();
         put(KEY_UUID, uuid.toString());
@@ -252,6 +268,22 @@ public class Debt extends ParseObject {
 
     String getUuidString() {
         return getString(KEY_UUID);
+    }
+
+    public ParseFile getPhotoFile() {
+        return getParseFile(KEY_PHOTO);
+    }
+
+    public void setPhotoFile(ParseFile file) {
+        put(KEY_PHOTO, file);
+    }
+
+    public ParseFile getThumbFile() {
+        return getParseFile(KEY_THUMBNAIL);
+    }
+
+    public void setThumbFile(ParseFile file) {
+        put(KEY_THUMBNAIL, file);
     }
 
     static ParseQuery<Debt> getQuery() {
@@ -297,5 +329,6 @@ public class Debt extends ParseObject {
             remove(key);
         }
     }
+
 
 }

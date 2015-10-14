@@ -224,6 +224,7 @@ int string com_parse_ui_parse_login_invalid_credentials_toast 0x7f040033
 int string com_parse_ui_parse_signup_button_label 0x7f040034
 int string com_parse_ui_password_input_hint 0x7f040035
 int string com_parse_ui_phone_input_hint 0x7f040044
+int string com_parse_ui_phone_taken_toast 0x7f040045
 int string com_parse_ui_progress_dialog_text 0x7f040036
 int string com_parse_ui_reenter_password_toast 0x7f040037
 int string com_parse_ui_signup_failed_unknown_toast 0x7f040038

@@ -7,6 +7,9 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.text.format.DateFormat;
 import android.view.LayoutInflater;
@@ -14,7 +17,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,8 +24,15 @@ import com.github.jjobes.slidedatetimepicker.SlideDateTimeListener;
 import com.github.jjobes.slidedatetimepicker.SlideDateTimePicker;
 import com.parse.FindCallback;
 import com.parse.ParseException;
+import com.parse.ParseFile;
+import com.parse.ParseImageView;
+import com.parse.ParsePush;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
+import com.parse.SendCallback;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.Date;
 import java.util.List;
@@ -36,6 +45,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
     private final Context mContext;
     private final List<Debt> mDebts;
     private final int mResource;
+
 
     static final int ACTION_CALL = 0;
     static final int ACTION_SMS = 1;
@@ -50,13 +60,17 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
 
     private class ViewHolder {
         TextView debtTitle;
-        public ImageView debtImage;
+        public ParseImageView debtImage;
         public TextView debtSubtitle;
         public Button action1;
         public Button action2;
         public Button action3;
     }
 
+    @Override
+    public int getCount() {
+        return 1;
+    }
 
     @Override
     public View getView(int position, View view, ViewGroup parent) {
@@ -65,7 +79,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
         if (view == null) {
             view = LayoutInflater.from(mContext).inflate(mResource, parent, false);
             holder = new ViewHolder();
-            holder.debtImage = (ImageView) view.findViewById(R.id.debt_icon);// TODO: 03/10/2015 rename
+            holder.debtImage = (ParseImageView) view.findViewById(R.id.debt_icon);// TODO: 03/10/2015 rename
             holder.debtTitle = (TextView) view
                     .findViewById(R.id.debt_title);
             holder.debtSubtitle = (TextView) view.findViewById(R.id.debt_subtitle);// TODO: 03/10/2015 rename
@@ -78,27 +92,44 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
         }
         TextView debtTitle = holder.debtTitle;
         TextView debtSubtitle = holder.debtSubtitle;
-        ImageView debtImage = holder.debtImage;
+        final ParseImageView debtIcon = holder.debtImage;
+        final ParseFile thumbFile = debt.getThumbFile();
+        final ParseFile photoFile = debt.getPhotoFile();
 
-        if (debt.getStatus() == Debt.STATUS_RETURNED) {
-            debtImage.setImageResource(R.drawable.ic_done_black_48dp);
+        if (debt.isReturned()) {
+            debtIcon.setImageResource(R.drawable.ic_done_black_48dp);
+        } else if (thumbFile != null) {
+            debtIcon.setParseFile(thumbFile);
+            debtIcon.loadInBackground();
+            debtIcon.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    FragmentManager fragmentManager = ((FragmentActivity) mContext).getSupportFragmentManager();
+                    FragmentTransaction transaction = fragmentManager.beginTransaction();
+                    FullscreenFragment fragment = new FullscreenFragment();
+                    fragment.setArguments(debtIcon, photoFile);
+                    transaction.add(android.R.id.content, fragment, MainActivity.FULLSCREEN_FRAGMENT_TAG);
+                    transaction.commit();
+                }
+            });
         } else if (debt.getCurrencyPos() != Debt.NON_MONEY_DEBT_CURRENCY) {
-            debtImage.setImageResource(R.drawable.dollar);
+            debtIcon.setImageResource(R.drawable.dollar);
         } else {
-            debtImage.setImageResource(R.drawable.box_closed_icon);// TODO: 25/09/2015 image / location
+            debtIcon.setImageResource(R.drawable.box_closed_icon);// TODO: 25/09/2015 image / location
         }
 
         // Action 1:
         holder.action1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                debt.setStatus(Debt.STATUS_RETURNED);
+                debt.toggleReturned();
                 debt.setDraft(true);
                 try {
                     debt.pin(DebtListApplication.DEBT_GROUP_NAME);
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
+                sendPushResponse(debt);
             }
         });
 
@@ -145,7 +176,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
 */
 
 //String extra = "\n"+debt.getUuidString()+"<-"+debt.getOtherUuid(); // REMOVE: 24/09/2015
-        String titleStr = debt.getTitle()+" stat: "+debt.getStatus();
+        String titleStr = debt.getTitle() + " stat: " + debt.getStatus();
         debtTitle.setText(titleStr);
         if (debt.isDraft()) {
             debtTitle.setTypeface(null, Typeface.ITALIC);
@@ -159,7 +190,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
                 debtTitle.setTextColor(Color.GREEN);
             } else if (debt.getStatus() == Debt.STATUS_CONFIRMED) {
                 debtTitle.setTextColor(Color.BLUE);
-            } else if (debt.getStatus() == Debt.STATUS_RETURNED) {// TODO: 08/10/2015
+            } else if (debt.isReturned()) {// TODO: 08/10/2015
                 debtTitle.setTextColor(Color.MAGENTA);
             } else if (debt.getStatus() == Debt.STATUS_DELETED) {
                 debtTitle.setTextColor(Color.YELLOW);
@@ -187,6 +218,53 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
         }
         return view;
     }
+
+
+    /**
+     * Synchronize the status of the other end
+     */
+    private void sendPushResponse(Debt debt) {
+        String ownerPhone = debt.getOwnerPhone();
+        String otherUuid = debt.getOtherUuid();
+        if (ownerPhone == null) {
+            return;
+        }
+        if (otherUuid == null) {
+            return;
+        }
+
+        JSONObject jsonObject;
+        try {
+            String title = EditDebtActivity.PUSH_TITLE_RESPONSE;
+            jsonObject = new JSONObject();
+            jsonObject.put("title", title);
+            jsonObject.put(Debt.KEY_STATUS, debt.getStatus());
+            jsonObject.put(Debt.KEY_UUID, debt.getUuidString());
+            jsonObject.put(Debt.KEY_OTHER_UUID, otherUuid);
+            jsonObject.put("isNew", false);
+            jsonObject.put("isResponsePush", true);
+
+            ParsePush push = new ParsePush();
+            push.setChannel(MainActivity.USER_CHANNEL_PREFIX + ownerPhone.replaceAll("[^0-9]+", ""));
+            // TODO: 06/10/2015  Gson gson = new Gson(); // Or use new GsonBuilder().create(); /*gson.toJson(o)*/
+            // TODO: 14/09/2015 use proxy (add image, date): https://gist.github.com/janakagamini/f5c63ea27bee8b7b7581
+            push.setData(jsonObject);
+            push.sendInBackground(new SendCallback() {
+                @Override
+                public void done(ParseException e) {
+                    if (e == null) {
+                    } else {
+                        Toast.makeText(mContext,
+                                "Push not sent: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show();// REMOVE: 15/09/2015
+                    }
+                }
+            });
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private void showDataTimePicker(final Debt debt) {
         SlideDateTimeListener listener = new SlideDateTimeListener() {
@@ -220,13 +298,15 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
                 .show();
     }
 
+
+
     /**
      * Show a confirmation push notification dialog, with an option to call the owner.
      */
     private void showActionsDialog(final Debt debt, int code) {
         int array;
         ParseUser currUser = ParseUser.getCurrentUser();
-        if (currUser != null && EditDebtActivity.isExistingUser(debt.getOwnerPhone(),code)) {
+        if (currUser != null && EditDebtActivity.isExistingUser(debt.getOwnerPhone(), code)) {
             array = R.array.contact_actions_array_logged_in;
         } else {
             array = R.array.contact_actions_array_logged_out;

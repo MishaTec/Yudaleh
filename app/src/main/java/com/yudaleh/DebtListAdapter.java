@@ -4,8 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -149,77 +147,30 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         swipeListView.setSwipeListViewListener(new BaseSwipeListViewListener() {
 
             @Override
-            public void onChoiceChanged(int position, boolean selected) {
-/*                Debt debt = (Debt) getChild(groupPosition, childPosition);
-                if (selected) {
-                    swipeListView.dispatchSetSelected(true);
-                    swipeListView.setSelection(position);
-                    swipeListView.setItemChecked(position, selected);
-                    mSelectedData.add(debt);
-                } else {
-                    swipeListView.dispatchSetSelected(false);
-                    mSelectedData.remove(debt);
-                }*/// TODO: 07/10/2015 make sure hidden items stay selected
-//                super.onChoiceChanged(position, selected);
-            }
-
-            @Override
-            public void onOpened(int position, boolean toRight) {
-            }
-
-            @Override
-            public void onClosed(int position, boolean fromRight) {
-            }
-
-            @Override
-            public void onListChanged() {
-            }
-
-            @Override
-            public void onMove(int position, float x) {
-            }
-
-            @Override
-            public void onStartOpen(int position, int action, boolean right) {
-                Log.d("swipe", String.format("onStartOpen %d - action %d", position, action));
-            }
-
-            @Override
-            public void onStartClose(int position, boolean right) {
-                Log.d("swipe", String.format("onStartClose %d", position));
-            }
-
-            @Override
             public void onClickFrontView(int position) {
                 openEditView(debt);
             }
 
-            @Override
-            public void onClickBackView(int position) {
-                Log.d("swipe", String.format("onClickBackView %d", position));
-            }
-
-            @Override
+/*            @Override
             public void onDismiss(int[] reverseSortedPositions) {
                 for (int position : reverseSortedPositions) {
 //                    System.out.println("dismiss: " + groupPosition + ", " + position);// REMOVE: 07/10/2015
                 }
 //                adapter.notifyDataSetChanged();
-            }
+            }*/
 
         });
         holder.childList.setAdapter(getAdapter(groupPosition, childPosition));
-
         return view;
     }
 
-    private int getCountSelected() {
+/*    private int getCountSelected() {
         return mSelectedData.size();
     }
 
     private void dismissSelected() {
         // TODO: 07/10/2015
-    }
+    }*/
 
 
     private ArrayAdapter<Debt> getAdapter(int groupPosition, int childPosition) {

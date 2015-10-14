@@ -30,6 +30,10 @@ repositories {
 //    }
 }
 
+
+
+
+
 dependencies {
     compile project(':fab')
     compile project(':ParseLoginUI')
@@ -38,16 +42,17 @@ dependencies {
     //    compile 'com.android.support:appcompat-v7:22.1.0@aar'
     //    compile 'com.android.support:recyclerview-v7:22.1.0@aar'
     //    compile 'com.android.support:support-v4:22.1.0@aar'
-    compile 'com.android.support:appcompat-v7:23.0.1'
-    compile 'com.parse:parse-android:1.10.1'
     compile files('libs/gson-2.3.1.jar')
     compile files('libs/svg-android-1.1.jar')
     compile files('libs/libphonenumber-7.0.9.jar')
-    compile 'com.edmodo:rangebar:1.0.0'
-    compile 'com.github.PhilJay:MPAndroidChart:v2.1.4'
     //    compile 'com.github.blackcat27:library:1.0.0-SNAPSHOT' todo
     compile files('libs/sinch-android-rtc-3.6.2.jar')
-    compile ('com.fortysevendeg.swipelistview:swipelistview:1.0-SNAPSHOT@aar') {
+    compile('com.fortysevendeg.swipelistview:swipelistview:1.0-SNAPSHOT@aar') {
         transitive = true
     }
+    compile 'com.android.support:appcompat-v7:23.0.1'
+    compile 'com.parse:parse-android:1.10.1'
+    compile 'com.edmodo:rangebar:1.0.0'
+    compile 'com.github.PhilJay:MPAndroidChart:v2.1.4'
+    compile 'com.android.support:design:23.0.1'
 }

@@ -11,6 +11,9 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 
+import com.parse.ParseException;
+import com.parse.ParseUser;
+
 /**
  * Accepts alarms on the due date of the debt.
  */
@@ -69,17 +72,32 @@ public class DueDateAlarm extends BroadcastReceiver {
         if (ownerPhone != null) {
             // Create dialing action
             String callTitle = "Call " + ownerName;
-            int callIcon = R.drawable.ic_call_white_36dp;
+            int callIcon = R.drawable.ic_call_white_24dp;
             Intent callIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + ownerPhone));
             PendingIntent notificationCallIntent = PendingIntent.getActivity(context, 0, callIntent
                     , PendingIntent.FLAG_UPDATE_CURRENT);
 
             // Create sms action
-            int smsIcon = R.drawable.ic_call_white_36dp;
+            int smsIcon = R.drawable.ic_call_white_24dp;
             String smsTitle = "SMS " + ownerName;
             Intent smsIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", ownerPhone, null));
             PendingIntent notificationSmsIntent = PendingIntent.getActivity(context, 0, smsIntent
                     , PendingIntent.FLAG_UPDATE_CURRENT);
+
+            // Create chat action
+            int chatIcon = R.drawable.ic_call_white_24dp;
+            String chatTitle = "Chat " + ownerName;
+            PendingIntent notificationChatIntent = null;
+            try {
+                String objId = ParseUser.getQuery().whereEqualTo(MainActivity.PARSE_USER_PHONE_KEY, ownerPhone).find().get(0).getObjectId();
+                Intent chatIntent = new Intent(context, MessagingActivity.class);
+                chatIntent.putExtra("RECIPIENT_ID", objId);
+                notificationChatIntent = PendingIntent.getActivity(context, 0, chatIntent
+                        , PendingIntent.FLAG_UPDATE_CURRENT);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 builder.addAction(new Notification.Action.Builder(
                         Icon.createWithResource(context, callIcon),
@@ -91,6 +109,13 @@ public class DueDateAlarm extends BroadcastReceiver {
                         smsTitle,
                         notificationSmsIntent)
                         .build());
+                if (notificationChatIntent != null) {
+                    builder.addAction(new Notification.Action.Builder(
+                            Icon.createWithResource(context, chatIcon),
+                            chatTitle,
+                            notificationChatIntent)
+                            .build());
+                }
             } else {
                 //noinspection deprecation
                 builder.addAction(callIcon, callTitle, notificationCallIntent);

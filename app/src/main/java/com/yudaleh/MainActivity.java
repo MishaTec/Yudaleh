@@ -8,10 +8,13 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Rect;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
@@ -21,6 +24,8 @@ import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
     static final int EDIT_ACTIVITY_CODE = 200;
     static final int EDIT_ACTIVITY_FRAGMENT_CODE = 65736;
     static final String USER_CHANNEL_PREFIX = "t";
+
+    static final String FULLSCREEN_FRAGMENT_TAG = "photoZoom";
 
     private static final int I_OWE_TAB_INDEX = 0;
     private static final int OWE_ME_TAB_INDEX = 1;
@@ -85,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
 
 //    ListViewFragment iOweViewFragmentWithTag;// REMOVE: 29/09/2015
 //    ListViewFragmentOweMe oweMeViewFragmentWithTag;
+
 
     // TODO: 26/09/2015 make messaging, call and push options only for logged in
     @Override
@@ -163,11 +171,15 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    @Override
     public void onBackPressed() {
-        if (isChartMode) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        Fragment currentFragment = fragmentManager != null ? fragmentManager.findFragmentByTag(FULLSCREEN_FRAGMENT_TAG) : null;
+        if (currentFragment != null) {
+            ((FullscreenFragment) currentFragment).shrinkBack();
+        } else if (isChartMode) {
             switchDisplayMode();
-        }
-        else if (backtoast != null && backtoast.getView().getWindowToken() != null) {
+        } else if (backtoast != null && backtoast.getView().getWindowToken() != null) {
             super.onBackPressed();
             finish();
         } else {
@@ -185,6 +197,7 @@ public class MainActivity extends AppCompatActivity {
             openEditView(uuid);
         }
     }*/// REMOVE: 08/09/2015
+
 
     @SuppressWarnings("deprecation")
     private void initActionBar() {

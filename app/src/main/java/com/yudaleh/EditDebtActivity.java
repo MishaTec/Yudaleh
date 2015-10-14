@@ -14,8 +14,11 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.InputType;
@@ -24,13 +27,13 @@ import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
 import android.text.style.ImageSpan;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
@@ -38,6 +41,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SearchView;
@@ -50,6 +54,8 @@ import com.github.jjobes.slidedatetimepicker.SlideDateTimePicker;
 import com.google.gson.Gson;
 import com.parse.FindCallback;
 import com.parse.ParseException;
+import com.parse.ParseFile;
+import com.parse.ParseImageView;
 import com.parse.ParsePush;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
@@ -66,10 +72,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Choosing debt details. Used both for new and for existing debts.
- */
 public class EditDebtActivity extends AppCompatActivity {
+
+    private static final int CAMERA_ACTIVITY_CODE = 55;
 
     private static final int FLAG_FORCE_BACK_TO_MAIN = 0x00040000;
     private static final int FLAG_SET_ALARM = 0X00020000;
@@ -89,29 +94,49 @@ public class EditDebtActivity extends AppCompatActivity {
     private EditText debtDescText;
     private SearchView searchView;
     private AutoCompleteTextView searchAutoComplete;
-    private ImageView closeBtn;
+    private ParseImageView debtBarImage;
 
+    private ImageView closeBtn;
     private Spinner spinner1;
     private Debt debt;
     private String debtId;
     private String debtOtherId;
     private String debtTabTag;
     private boolean isFromPush;
+
     private boolean isNew;
     private boolean isModified;
-
     private Debt beforeChange;
     private int currencyPos;
     private boolean isSendPushToOwner = false;
 
-
-    //**********************************************************************************************
-    //**************************************** Lifecycle methods: **********************************
-    //**********************************************************************************************
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_debt);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startCamera();
+            }
+        });
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        DisplayMetrics displaymetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+        int screenHeight = displaymetrics.heightPixels;
+
+        int actionBarHeight = 0;
+        TypedValue tv = new TypedValue();
+        if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+            actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
+        }
+
+        findViewById(R.id.edit_debt_form).setMinimumHeight(screenHeight - actionBarHeight);
 
         fetchExtras();
         setActionBarTitle();
@@ -132,7 +157,7 @@ public class EditDebtActivity extends AppCompatActivity {
             debtTitleText.requestFocus();
         }
 
-        remindButton.setOnClickListener(new OnClickListener() {
+        remindButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -199,6 +224,11 @@ public class EditDebtActivity extends AppCompatActivity {
                 if (isModified) {
                     showSaveChangesConfirm();
                     return true;
+                } else if (isNew) {
+                    try {
+                        debt.unpin();
+                    } catch (ParseException ignored) {
+                    }
                 }
                 break;
             case R.id.action_delete:// TODO: 24/09/2015 confirm dialog
@@ -233,6 +263,18 @@ public class EditDebtActivity extends AppCompatActivity {
                 break;
         }
         return false;
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        // An OK result means the pinned dataset changed or
+        // log in was successful
+        if (resultCode == RESULT_OK) {
+            if (requestCode == CAMERA_ACTIVITY_CODE) {
+                debtBarImage.setParseFile(debt.getPhotoFile());  // TODO: 14/10/2015 transfer by extra?
+                debtBarImage.loadInBackground();
+            }
+        }
     }
 
     private void showNoPhoneErrorDialog() {
@@ -340,7 +382,12 @@ public class EditDebtActivity extends AppCompatActivity {
     private void revertChangesAndCancel() {
         if (!isNew) {
             debt.copyFrom(beforeChange); // TODO: 9/30/2015 check if needed, cuz debt may stay unsaved
-        } // otherwise, changes are not saved anyway
+        } else {
+            try {
+                debt.unpin();
+            } catch (ParseException ignored) {
+            }// otherwise, changes are not saved anyway
+        }
         cancelActivity();
     }
 
@@ -360,9 +407,14 @@ public class EditDebtActivity extends AppCompatActivity {
         setDebtFieldsAfterEditing();
         if (isModified) {
             showSaveChangesConfirm();
-        } else {
-            super.onBackPressed();
+            return;
+        } else if (isNew) {
+            try {
+                debt.unpin();
+            } catch (ParseException ignored) {
+            }
         }
+        super.onBackPressed();
     }
 
     /**
@@ -370,10 +422,10 @@ public class EditDebtActivity extends AppCompatActivity {
      */
     private void fetchExtras() {
         isNew = getIntent().getBooleanExtra("isNew", true);
+        isFromPush = getIntent().getBooleanExtra("fromPush", false);
         debtId = getIntent().getStringExtra(Debt.KEY_UUID);
         debtOtherId = getIntent().getStringExtra(Debt.KEY_OTHER_UUID);
         debtTabTag = getIntent().getStringExtra(Debt.KEY_TAB_TAG);
-        isFromPush = getIntent().getBooleanExtra("fromPush", false);
     }
 
     /**
@@ -390,6 +442,12 @@ public class EditDebtActivity extends AppCompatActivity {
         if ((flags & FLAG_FORCE_BACK_TO_MAIN) != 0) {
             returnToMain(debt); // in case the activity was not started for a result
         }
+    }
+
+    public void startCamera() {
+        Intent intent = new Intent(getApplicationContext(), CameraActivity.class);
+        intent.putExtra(Debt.KEY_UUID, debt.getUuidString());
+        startActivityForResult(intent, CAMERA_ACTIVITY_CODE);
     }
 
     /**
@@ -507,20 +565,24 @@ public class EditDebtActivity extends AppCompatActivity {
     }
 
     /**
-     * Loads the current <code>Debt</code> from parse.
+     * Loads the current <code>Debt</code> from local database.
      *
      * @throws ParseException
      */
-    private void loadExistingDebt() throws ParseException {
+    private void loadExistingDebt(boolean setTextFields) throws ParseException {
         ParseQuery<Debt> query = Debt.getQuery();
         query.fromLocalDatastore();
         query.whereEqualTo(Debt.KEY_UUID, debtId);
         debt = query.getFirst();
+        if (!setTextFields) {
+            return;
+        }
+        loadBarImage(debt.getPhotoFile());
         debtTitleText.setText(debt.getTitle());
-        spinner1.setSelection(debt.getCurrencyPos());
         debtOwnerText.setText(debt.getOwnerName());
         debtPhoneText.setText(debt.getOwnerPhone());
         debtDescText.setText(debt.getDescription());
+        spinner1.setSelection(debt.getCurrencyPos());
         Date dueDate = debt.getDueDate();
         if (dueDate != null) {
             remindButton.setText(DateFormat.format("MM/dd/yy h:mmaa", dueDate.getTime()));
@@ -529,28 +591,37 @@ public class EditDebtActivity extends AppCompatActivity {
     }
 
     /**
-     * Creates a copy of the current <code>Debt</code> with reversed tag.
+     * Creates a copy of the <code>Debt</code> on Parse with reversed tag.
      *
      * @throws ParseException
      */
     private void cloneDebtFromPush() throws ParseException {
         ParseQuery<Debt> query = Debt.getQuery();
         query.whereEqualTo(Debt.KEY_UUID, debtOtherId);
-
         Debt other = query.getFirst();
         debt.setOtherUuid(debtOtherId);
         debt.setDateCreated(other.getDateCreated());
         debt.setTabTag(reverseTag(other.getTabTag()));
+        debt.setThumbFile(other.getThumbFile());
+        ParseFile photoFile = other.getPhotoFile();
+        debt.setPhotoFile(photoFile);
+        loadBarImage(photoFile);
         debtTitleText.setText(other.getTitle());
         debtOwnerText.setText(other.getAuthorName());
         debtPhoneText.setText(other.getAuthorPhone());
         debtDescText.setText(other.getDescription());
+        spinner1.setSelection(debt.getCurrencyPos());
         Date dueDate = other.getDueDate();
         if (dueDate != null) {
             debt.setDueDate(dueDate);
             remindButton.setText(DateFormat.format("MM/dd/yy h:mmaa", dueDate.getTime()));
             remindCheckBox.setChecked(true);
         }
+    }
+
+    private void loadBarImage(ParseFile imageFile) {
+        debtBarImage.setParseFile(imageFile);  // TODO: 14/10/2015 transfer by extra?
+        debtBarImage.loadInBackground();
     }
 
     /**
@@ -564,15 +635,15 @@ public class EditDebtActivity extends AppCompatActivity {
                 debt = new Debt();
                 debt.setUuidString();
                 debt.setStatus(Debt.STATUS_CONFIRMED);
+                debt.pin(DebtListApplication.DEBT_GROUP_NAME);// TODO: 13/10/2015 remove after camera made fragment
                 cloneDebtFromPush();
             } else {
-                loadExistingDebt();
+                loadExistingDebt(false);
                 cloneDebtFromPush();
             }
-
         } else if (debtId != null) {
             isNew = false;
-            loadExistingDebt();
+            loadExistingDebt(true);
         } else {
             isNew = true;
             debt = new Debt();
@@ -580,6 +651,7 @@ public class EditDebtActivity extends AppCompatActivity {
             debt.setUuidString();
             debt.setTabTag(debtTabTag);
             debt.setStatus(Debt.STATUS_CREATED);
+            debt.pin(DebtListApplication.DEBT_GROUP_NAME);// TODO: 13/10/2015 remove after camera made fragment
         }
         beforeChange = debt.createClone();
     }
@@ -592,7 +664,7 @@ public class EditDebtActivity extends AppCompatActivity {
     /**
      * Synchronize the status of the other end
      *
-     * @param status    to deliver to the other end
+     * @param status to deliver to the other end
      */
     private void sendPushResponse(String ownerPhone, final int status) {
         String otherUuid = debt.getOtherUuid();
@@ -610,6 +682,7 @@ public class EditDebtActivity extends AppCompatActivity {
             jsonObject.put("title", title);
             jsonObject.put(Debt.KEY_STATUS, status);
             jsonObject.put(Debt.KEY_UUID, debt.getUuidString());
+            jsonObject.put(Debt.KEY_IS_RETURNED, debt.isReturned());
             jsonObject.put(Debt.KEY_OTHER_UUID, otherUuid);
             jsonObject.put("isNew", isNew);
             jsonObject.put("isResponsePush", true);
@@ -735,12 +808,12 @@ public class EditDebtActivity extends AppCompatActivity {
         Gson gson = new Gson(); //todo Or use new GsonBuilder().create();
         JSONObject jsonObject;
         try {
-            String alert = debt.getStatus() + "+" + debt.getUuidString() + "+" + debt.getOtherUuid();
             jsonObject = new JSONObject();
             jsonObject.put("title", title);
             jsonObject.put(Debt.KEY_STATUS, debt.getStatus());
             jsonObject.put(Debt.KEY_UUID, debt.getUuidString());
             jsonObject.put(Debt.KEY_OTHER_UUID, debt.getOtherUuid());
+            jsonObject.put(Debt.KEY_IS_RETURNED, debt.isReturned());
             jsonObject.put("isNew", isNew);
             jsonObject.put("isResponsePush", false);
 
@@ -818,6 +891,7 @@ public class EditDebtActivity extends AppCompatActivity {
      * Retrieve the <code>View</code>s by their ids.
      */
     private void initViewHolders() {
+        debtBarImage = (ParseImageView) findViewById(R.id.bar_debt_image);
         debtTitleText = (EditText) findViewById(R.id.debt_title);
         debtTitleText.setOnEditorActionListener(focusNextEmptyListener);
         debtOwnerText = (EditText) findViewById(R.id.debt_owner);
@@ -961,7 +1035,7 @@ public class EditDebtActivity extends AppCompatActivity {
     private void setupSearch(Menu menu) {
         SearchManager searchManager =
                 (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        MenuItem searchViewMenuItem = menu.findItem(R.id.search);
+        MenuItem searchViewMenuItem = menu.findItem(R.id.action_search);
         searchView = (SearchView) searchViewMenuItem.getActionView();
         setSearchTextColors();
         searchView.setSearchableInfo(
@@ -1164,5 +1238,4 @@ public class EditDebtActivity extends AppCompatActivity {
 
         Toast.makeText(this, "REMOVED Reminder " + alarmId, Toast.LENGTH_LONG).show(); // REMOVE: 07/09/2015
     }
-
 }

@@ -1,7 +1,7 @@
 package com.yudaleh;
 
 /**
- * Created by Michael on 04/10/2015.
+ * Represents a single header item in the expandable list of debts.
  */
 class Header {
     private String ownerPhone;

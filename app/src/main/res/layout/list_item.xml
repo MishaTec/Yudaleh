@@ -38,7 +38,7 @@
         android:orientation="vertical"
         android:tag="front">
 
-        <ImageView
+        <com.parse.ParseImageView
             android:id="@+id/debt_icon"
             style="@style/ListImage"
             android:contentDescription="@string/debt_icon_desc" />

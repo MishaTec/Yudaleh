@@ -358,6 +358,7 @@ containing a value of this type.
         public static final int com_parse_ui_parse_signup_button_label=0x7f040034;
         public static final int com_parse_ui_password_input_hint=0x7f040035;
         public static final int com_parse_ui_phone_input_hint=0x7f040044;
+        public static final int com_parse_ui_phone_taken_toast=0x7f040045;
         public static final int com_parse_ui_progress_dialog_text=0x7f040036;
         public static final int com_parse_ui_reenter_password_toast=0x7f040037;
         public static final int com_parse_ui_signup_failed_unknown_toast=0x7f040038;
