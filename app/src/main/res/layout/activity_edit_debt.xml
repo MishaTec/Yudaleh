@@ -1,99 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/scrollView"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:fitsSystemWindows="true"
+    tools:context="com.yudaleh.EditDebtActivity">
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        android:orientation="vertical"
-        android:paddingBottom="30dp">
+    <android.support.design.widget.AppBarLayout android:id="@+id/app_bar"
+        android:fitsSystemWindows="true" android:layout_height="wrap_content"
+        android:layout_width="match_parent" android:theme="@style/AppTheme.AppBarOverlay">
 
+        <android.support.design.widget.CollapsingToolbarLayout android:id="@+id/toolbar_layout"
+            android:fitsSystemWindows="true" android:layout_width="match_parent"
+            android:layout_height="wrap_content" app:layout_scrollFlags="scroll|exitUntilCollapsed"
+            app:contentScrim="?attr/colorPrimary">
 
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <EditText
-                android:id="@+id/debt_title"
+            <com.parse.ParseImageView
+                android:id="@+id/bar_debt_image"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/debt_title_hint"
-                android:inputType="textCapSentences"
-                android:nextFocusDown="@+id/debt_owner"
-                android:paddingTop="30dp"
-                android:layout_weight="1" />
-
-            <Spinner
-                android:id="@+id/spinner1"
-                android:layout_width="100dp"
                 android:layout_height="match_parent"
-                android:entries="@array/country_arrays"
-                android:spinnerMode="dropdown" />
-        </LinearLayout>
+                android:fitsSystemWindows="true"
+                android:scaleType="centerCrop"
+                app:layout_collapseMode="pin"
+                />
 
-        <EditText
-            android:id="@+id/debt_owner"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/debt_owner_hint"
-            android:inputType="textCapWords"
-            android:nextFocusDown="@+id/debt_phone"
-            android:paddingTop="30dp" />
+            <android.support.v7.widget.Toolbar android:id="@+id/toolbar"
+                android:layout_height="?attr/actionBarSize" android:layout_width="match_parent"
+                app:layout_collapseMode="pin"
+                app:popupTheme="@style/AppTheme.PopupOverlay" />
 
-        <EditText
-            android:id="@+id/debt_phone"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/debt_phone_hint"
-            android:inputType="phone"
-            android:nextFocusDown="@+id/debt_desc"
-            android:paddingTop="30dp" />
+        </android.support.design.widget.CollapsingToolbarLayout>
+    </android.support.design.widget.AppBarLayout>
 
-        <EditText
-            android:id="@+id/debt_desc"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/debt_desc_hint"
-            android:inputType="textCapSentences"
-            android:paddingTop="30dp" />
+    <include layout="@layout/content_edit_debt" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:baselineAligned="false"
-            android:gravity="bottom"
-            android:orientation="horizontal"
-            android:paddingBottom="30dp"
-            android:paddingTop="30dp">
+    <android.support.design.widget.FloatingActionButton android:id="@+id/fab"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin" app:layout_anchor="@id/app_bar"
+        app:layout_anchorGravity="bottom|end" android:src="@drawable/ic_photo_camera_white_36dp" />
 
-            <CheckBox
-                android:id="@+id/remind_checkbox"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:checked="false"
-                android:text="@string/remind_checkbox_text" />
-
-            <Button
-                android:id="@+id/remind_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="5"
-                android:text="@string/remind_button_text" />
-        </LinearLayout>
-
-        <CheckBox
-            android:id="@+id/push_checkbox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="false"
-            android:visibility="gone"
-            android:text="@string/push_checkbox_text" />
-
-    </LinearLayout>
-</ScrollView>
+</android.support.design.widget.CoordinatorLayout>
