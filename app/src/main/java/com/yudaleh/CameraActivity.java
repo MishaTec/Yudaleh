@@ -1,5 +1,7 @@
 package com.yudaleh;
 
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -19,6 +21,7 @@ import com.parse.ParseFile;
 import com.parse.ParseQuery;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class CameraActivity extends AppCompatActivity {
@@ -150,8 +153,27 @@ public class CameraActivity extends AppCompatActivity {
         Bitmap rotatedDebtImageBig = Bitmap.createScaledBitmap(rotatedDebtImage, BIG_IMAGE_SIZE, BIG_IMAGE_SIZE
                 * rotatedDebtImage.getHeight() / rotatedDebtImage.getWidth(), false);
 
+        try {
+            //Write file
+            String filename = "bitmap.png";
+            FileOutputStream stream = this.openFileOutput(filename, Context.MODE_PRIVATE);
+            rotatedDebtImageBig.compress(Bitmap.CompressFormat.PNG, 100, stream);
 
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            //Cleanup
+            stream.close();
+            rotatedDebtImageBig.recycle();
+
+            //Pop intent
+            Intent in1 = new Intent();
+            in1.putExtra("image", filename);
+            setResult(RESULT_OK, in1);
+            finish();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+       /* ByteArrayOutputStream bos = new ByteArrayOutputStream();
         rotatedDebtImageBig.compress(Bitmap.CompressFormat.JPEG, 100, bos);
         byte[] origData = bos.toByteArray();
 
@@ -175,7 +197,7 @@ public class CameraActivity extends AppCompatActivity {
                     Toast.LENGTH_LONG).show();
             setResult(RESULT_CANCELED);
             finish();
-        }
+        }*/
     }
 
 

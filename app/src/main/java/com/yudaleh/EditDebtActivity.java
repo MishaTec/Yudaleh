@@ -9,6 +9,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -22,6 +24,7 @@ import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.InputType;
@@ -69,6 +72,8 @@ import com.parse.SendCallback;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -275,8 +280,24 @@ public class EditDebtActivity extends AppCompatActivity {
         // log in was successful
         if (resultCode == RESULT_OK) {
             if (requestCode == CAMERA_ACTIVITY_CODE) {
-                debtBarImage.setParseFile(debt.getPhotoFile());  // TODO: 14/10/2015 transfer by extra?
-                debtBarImage.loadInBackground();
+                Bitmap rotatedDebtImageBig = null;
+                String filename = data.getStringExtra("image");
+                try {
+                    FileInputStream is = this.openFileInput(filename);
+                    rotatedDebtImageBig = BitmapFactory.decodeStream(is);
+                    is.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if (rotatedDebtImageBig != null) {
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    rotatedDebtImageBig.compress(Bitmap.CompressFormat.JPEG, 100, bos);
+                    byte[] origData = bos.toByteArray();
+                    ParseFile photoFile = new ParseFile("debt_photo.jpg", origData);
+                    debt.setPhotoFile(photoFile);
+                    debtBarImage.setParseFile(photoFile);  // TODO: 14/10/2015 transfer by extra?
+                    debtBarImage.loadInBackground();
+                }
             }
         }
     }
