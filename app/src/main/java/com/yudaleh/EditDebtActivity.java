@@ -233,11 +233,6 @@ public class EditDebtActivity extends AppCompatActivity {
                 if (isModified) {
                     showSaveChangesConfirm();
                     return true;
-                } else if (isNew) {
-                    try {
-                        debt.unpin();
-                    } catch (ParseException ignored) {
-                    }
                 }
                 break;
             case R.id.action_delete:// TODO: 24/09/2015 confirm dialog
@@ -280,23 +275,35 @@ public class EditDebtActivity extends AppCompatActivity {
         // log in was successful
         if (resultCode == RESULT_OK) {
             if (requestCode == CAMERA_ACTIVITY_CODE) {
-                Bitmap rotatedDebtImageBig = null;
                 String filename = data.getStringExtra("image");
                 try {
                     FileInputStream is = this.openFileInput(filename);
-                    rotatedDebtImageBig = BitmapFactory.decodeStream(is);
+                    Bitmap rotatedDebtImageBig = BitmapFactory.decodeStream(is);
                     is.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                if (rotatedDebtImageBig != null) {
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     rotatedDebtImageBig.compress(Bitmap.CompressFormat.JPEG, 100, bos);
                     byte[] origData = bos.toByteArray();
                     ParseFile photoFile = new ParseFile("debt_photo.jpg", origData);
+                    photoFile.save();
                     debt.setPhotoFile(photoFile);
-                    debtBarImage.setParseFile(photoFile);  // TODO: 14/10/2015 transfer by extra?
+                    debtBarImage.setParseFile(photoFile);
                     debtBarImage.loadInBackground();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                String filenameThumb = data.getStringExtra("imageThumb");
+                try {
+                    FileInputStream is2 = this.openFileInput(filenameThumb);
+                    Bitmap rotatedDebtImageSmall = BitmapFactory.decodeStream(is2);
+                    is2.close();
+                    ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
+                    rotatedDebtImageSmall.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
+                    byte[] smallData = bos2.toByteArray();
+                    ParseFile thumbFile = new ParseFile("debt_thumb.jpg", smallData);
+                    thumbFile.save();
+                    debt.setThumbFile(thumbFile);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -407,11 +414,6 @@ public class EditDebtActivity extends AppCompatActivity {
     private void revertChangesAndCancel() {
         if (!isNew) {
             debt.copyFrom(beforeChange); // TODO: 9/30/2015 check if needed, cuz debt may stay unsaved
-        } else {
-            try {
-                debt.unpin();
-            } catch (ParseException ignored) {
-            }// otherwise, changes are not saved anyway
         }
         cancelActivity();
     }
@@ -433,13 +435,9 @@ public class EditDebtActivity extends AppCompatActivity {
         if (isModified) {
             showSaveChangesConfirm();
             return;
-        } else if (isNew) {
-            try {
-                debt.unpin();
-            } catch (ParseException ignored) {
-            }
+        } else {
+            super.onBackPressed();
         }
-        super.onBackPressed();
     }
 
     /**
@@ -660,7 +658,6 @@ public class EditDebtActivity extends AppCompatActivity {
                 debt = new Debt();
                 debt.setUuidString();
                 debt.setStatus(Debt.STATUS_CONFIRMED);
-                debt.pin(DebtListApplication.DEBT_GROUP_NAME);// TODO: 13/10/2015 remove after camera made fragment
                 cloneDebtFromPush();
             } else {
                 loadExistingDebt(false);
@@ -676,7 +673,6 @@ public class EditDebtActivity extends AppCompatActivity {
             debt.setUuidString();
             debt.setTabTag(debtTabTag);
             debt.setStatus(Debt.STATUS_CREATED);
-            debt.pin(DebtListApplication.DEBT_GROUP_NAME);// TODO: 13/10/2015 remove after camera made fragment
         }
         beforeChange = debt.createClone();
     }

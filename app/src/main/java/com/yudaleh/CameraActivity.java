@@ -107,26 +107,6 @@ public class CameraActivity extends AppCompatActivity {
             }
 
         });
-        try {
-            loadExistingDebt(getIntent().getStringExtra(Debt.KEY_UUID));
-        } catch (ParseException e) {
-            Toast.makeText(CameraActivity.this, "Failed loading debt", Toast.LENGTH_SHORT).show();// TODO: 13/10/2015 make sure toast is displayed
-            setResult(RESULT_CANCELED);
-            finish();
-        }
-    }
-
-
-    /**
-     * Loads the current <code>Debt</code> from local database.
-     *
-     * @throws ParseException
-     */
-    private void loadExistingDebt(String debtId) throws ParseException {
-        ParseQuery<Debt> query = Debt.getQuery();
-        query.fromLocalDatastore();
-        query.whereEqualTo(Debt.KEY_UUID, debtId);
-        debt = query.getFirst();
     }
 
     /*
@@ -153,26 +133,41 @@ public class CameraActivity extends AppCompatActivity {
         Bitmap rotatedDebtImageBig = Bitmap.createScaledBitmap(rotatedDebtImage, BIG_IMAGE_SIZE, BIG_IMAGE_SIZE
                 * rotatedDebtImage.getHeight() / rotatedDebtImage.getWidth(), false);
 
+        Intent in1 = new Intent();
         try {
             //Write file
-            String filename = "bitmap.png";
+            String filename = "bitmap.jpg";
             FileOutputStream stream = this.openFileOutput(filename, Context.MODE_PRIVATE);
-            rotatedDebtImageBig.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            rotatedDebtImageBig.compress(Bitmap.CompressFormat.JPEG, 100, stream);
 
             //Cleanup
             stream.close();
             rotatedDebtImageBig.recycle();
 
-            //Pop intent
-            Intent in1 = new Intent();
             in1.putExtra("image", filename);
-            setResult(RESULT_OK, in1);
-            finish();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        try {
+            //Write file
+            String filename = "bitmapThumb.jpg";
+            FileOutputStream stream = this.openFileOutput(filename, Context.MODE_PRIVATE);
+            rotatedDebtImageSmall.compress(Bitmap.CompressFormat.JPEG, 100, stream);
 
+            //Cleanup
+            stream.close();
+            rotatedDebtImageSmall.recycle();
+
+            in1.putExtra("imageThumb", filename);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        setResult(RESULT_OK, in1);
+        finish();
        /* ByteArrayOutputStream bos = new ByteArrayOutputStream();
         rotatedDebtImageBig.compress(Bitmap.CompressFormat.JPEG, 100, bos);
         byte[] origData = bos.toByteArray();
