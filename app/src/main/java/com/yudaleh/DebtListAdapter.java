@@ -33,6 +33,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
     static final int ACTION_CALL = 0;
     static final int ACTION_SMS = 1;
     static final int ACTION_CHAT = 2;
+    static final double DOLLAR_TO_NIS_RATIO = 3.84; // TODO: 10/17/2015 real rates
 
     private final Context mContext;
     private final ArrayList<Integer> mColors;
@@ -79,7 +80,11 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         }
         double total = 0;
         for (Debt debt : debts) {
-            total += debt.getMoneyAmount();
+            double currAmount = debt.getMoneyAmount();
+            if(debt.getCurrencyPos()==1){
+                currAmount/=DOLLAR_TO_NIS_RATIO;
+            }
+            total += currAmount;
         }
         return total;
     }
@@ -127,7 +132,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         lblListHeader.setTypeface(null, Typeface.BOLD);
 
         if (totalMoneyAmount > 0) {
-            headerTitle += "\nTotal: " + totalMoneyStr + " NIS";
+            headerTitle += "\nTotal: " + totalMoneyStr + " $";
         }
 
         lblListHeader.setText(headerTitle);

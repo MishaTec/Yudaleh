@@ -386,7 +386,11 @@ public class ChartFragment extends android.support.v4.app.Fragment {
         }
         double total = 0;
         for (Debt debt : debts) {
-            total += debt.getMoneyAmount();
+            double currAmount = debt.getMoneyAmount();
+            if (debt.getCurrencyPos() == 1) {
+                currAmount /= DebtListAdapter.DOLLAR_TO_NIS_RATIO;
+            }
+            total += currAmount;
         }
         return total;
     }
