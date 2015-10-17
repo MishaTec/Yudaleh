@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Rect;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -24,14 +23,11 @@ import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.parse.DeleteCallback;
 import com.parse.FindCallback;
-import com.parse.ParseAnonymousUtils;
 import com.parse.ParseException;
 import com.parse.ParseInstallation;
 import com.parse.ParseObject;
@@ -41,7 +37,6 @@ import com.parse.ParseUser;
 import com.parse.SaveCallback;
 import com.parse.ui.ParseLoginBuilder;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -87,8 +82,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Intent serviceIntent;
     private boolean isSyncOptionVisible = true;
-    private Toast backtoast;
-
+    private Toast backToast;
 
 //    ListViewFragment iOweViewFragmentWithTag;// REMOVE: 29/09/2015
 //    ListViewFragmentOweMe oweMeViewFragmentWithTag;
@@ -149,7 +143,6 @@ public class MainActivity extends AppCompatActivity {
             setSyncOptionVisibility(true);
         }
         Intent intent = getIntent();
-
         if (intent != null && intent.hasExtra("isResponsePush")) {
             ActionBar actionBar = getSupportActionBar();
             actionBar.selectTab(actionBar.getTabAt(I_OWE_TAB_INDEX));
@@ -179,12 +172,12 @@ public class MainActivity extends AppCompatActivity {
             ((FullscreenFragment) currentFragment).shrinkBack();
         } else if (isChartMode) {
             switchDisplayMode();
-        } else if (backtoast != null && backtoast.getView().getWindowToken() != null) {
+        } else if (backToast != null && backToast.getView().getWindowToken() != null) {
             super.onBackPressed();
             finish();
         } else {
-            backtoast = Toast.makeText(this, " Press Back again to Exit ", Toast.LENGTH_SHORT);
-            backtoast.show();
+            backToast = Toast.makeText(this, " Press Back again to Exit ", Toast.LENGTH_SHORT);
+            backToast.show();
         }
     }
 /*    @Override

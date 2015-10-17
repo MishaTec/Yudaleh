@@ -1,8 +1,9 @@
 package com.yudaleh;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +17,7 @@ import com.fortysevendeg.swipelistview.SwipeListView;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.parse.ParseQueryAdapter;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -37,8 +39,9 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
     private HashMap<String, List<ArrayAdapter<Debt>>> mChildrenAdapters;
     private List<Header> mDataHeaders;
     private List<Debt> mSelectedData;
-    private HashMap<String, Integer> mOwnerNamesCount;
+    HashMap<String, Integer> mOwnerNamesCount;
     private HashMap<String, List<Debt>> mDataChildren;
+    private int mNonMoneyColor;
 
     // TODO: 29/09/2015 pinned heads
 //    @Override public int getViewTypeCount() {
@@ -101,6 +104,10 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         Header header = (Header) getGroup(groupPosition);
         String phone = header.getOwnerPhone();
         String name = header.getOwnerName();
+        double totalMoneyAmount = header.getTotalMoney();
+        DecimalFormat decimalFormat = new DecimalFormat();
+        decimalFormat.setDecimalSeparatorAlwaysShown(false);
+        String totalMoneyStr = decimalFormat.format(totalMoneyAmount);
 
         if (convertView == null) {
             LayoutInflater inflater = (LayoutInflater) mContext
@@ -113,19 +120,19 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
             if (phone != null) {
                 headerTitle += " (" + phone + ")";
             } // TODO: 09/10/2015 else, merge dialog (not here)
-
         }
 
         TextView lblListHeader = (TextView) convertView
                 .findViewById(R.id.lblListHeader);
         lblListHeader.setTypeface(null, Typeface.BOLD);
-        lblListHeader.setText(headerTitle);
 
-        if (header.getTotalMoney() > 0) {
-            convertView.setBackgroundColor(header.getColor());
-        } else {
-            convertView.setBackgroundColor(Color.LTGRAY);
+        if (totalMoneyAmount > 0) {
+            headerTitle += "\nTotal: " + totalMoneyStr + " NIS";
         }
+
+        lblListHeader.setText(headerTitle);
+        convertView.setBackgroundColor(header.getColor());
+
         return convertView;
     }
 
@@ -144,14 +151,14 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         final Debt debt = (Debt) getChild(groupPosition, childPosition);
         final SwipeListView swipeListView = holder.childList;
 //        swipeListView.color(mColors.get(0));
+        final View finalView = view;
         swipeListView.setSwipeListViewListener(new BaseSwipeListViewListener() {
 
             @Override
             public void onChoiceChanged(int position, boolean selected) {
                 super.onChoiceChanged(position, selected);
                 if (selected) {
-                    swipeListView.dismissSelected();
-                    swipeListView.notify();
+                    swipeListView.setSelection(position);
                 }
             }
 
@@ -236,7 +243,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
             mColors.add(c);
         for (int c : ColorTemplate.PASTEL_COLORS)
             mColors.add(c);
-        mColors.add(ColorTemplate.getHoloBlue());
+        mNonMoneyColor = ColorTemplate.getHoloBlue();
 
         // Init data to prevent NullPointerException
         mDataHeaders = new ArrayList<>();
@@ -294,6 +301,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
                     mOwnerNamesCount.put(name, mOwnerNamesCount.get(name) + 1);
                 }
             } else {
+
                 mDataChildren.get(key).add(debt);
                 mChildrenAdapters.get(key).add(swipeAdapter);
             }
@@ -319,10 +327,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         int i = 0;
         int numColors = mColors.size();
         for (Header header : mDataHeaders) {
-            if (header.getTotalMoney() > 0) {
-                header.setColor(mColors.get(i % numColors));
-                i++;
-            }
+            header.setColor(header.getTotalMoney() > 0 ? mColors.get(i++ % numColors) : mNonMoneyColor);
         }
     }
 

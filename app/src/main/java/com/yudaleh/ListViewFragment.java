@@ -66,7 +66,7 @@ public class ListViewFragment extends android.support.v4.app.Fragment {
             public void onClick(View v) {
                 Intent i = new Intent(getActivity().getApplicationContext(), EditDebtActivity.class);
                 i.putExtra(Debt.KEY_TAB_TAG, getTag());
-                startActivityForResult(i , MainActivity.EDIT_ACTIVITY_CODE);
+                startActivityForResult(i, MainActivity.EDIT_ACTIVITY_CODE);
             }
         });
         fab.attachToListView(listView, null);

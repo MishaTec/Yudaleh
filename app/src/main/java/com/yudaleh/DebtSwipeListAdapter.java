@@ -158,10 +158,9 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
         holder.action3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                showDataTimePicker(debt);
+                showDateTimePicker(debt);
             }
         });
-        holder.action3.setVisibility(View.INVISIBLE);
 
         // TODO: 05/09/2015 remove info
 /*
@@ -268,7 +267,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
     }
 
 
-    private void showDataTimePicker(final Debt debt) {
+    private void showDateTimePicker(final Debt debt) {
         SlideDateTimeListener listener = new SlideDateTimeListener() {
 
             @SuppressWarnings("deprecation")
@@ -276,11 +275,19 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
             public void onDateTimeSet(Date date) {
                 date.setSeconds(0);
                 debt.setDueDate(date);// TODO: 11/10/2015 save debt
+                debt.setDraft(true);
+                try {
+                    debt.pin(DebtListApplication.DEBT_GROUP_NAME);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                sendPushResponse(debt);
+                notifyDataSetChanged();
             }
 
             @Override
             public void onDateTimeCancel() {
-
+// TODO: 10/17/2015 remove dueDate, but change button text to "Remove"
             }
         };
         Date now = new Date();
@@ -363,7 +370,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
         Intent i = new Intent(mContext, EditDebtActivity.class);
         i.putExtra(Debt.KEY_UUID, debt.getUuidString());
         i.putExtra(Debt.KEY_TAB_TAG, debt.getTabTag());
-        i.putExtra(EditDebtActivity.FOCUS_ON_PHONE_EXTRA,true);
+        i.putExtra(EditDebtActivity.FOCUS_ON_PHONE_EXTRA, true);
         mContext.startActivity(i);
     }
 

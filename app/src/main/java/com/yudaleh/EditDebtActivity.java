@@ -16,15 +16,10 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.InputType;
@@ -36,7 +31,6 @@ import android.text.style.ImageSpan;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.DragEvent;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -48,7 +42,6 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SearchView;
@@ -78,6 +71,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -87,6 +81,8 @@ public class EditDebtActivity extends AppCompatActivity {
 
     private static final int FLAG_FORCE_BACK_TO_MAIN = 0x00040000;
     private static final int FLAG_SET_ALARM = 0X00020000;
+    private static final int FLAG_MERGE_NON_MONEY_DEBT = 0X00060000;
+
     static final int CODE_USER_EXISTENCE_CONFIRMED = 0;
     static final int CODE_USER_EXISTENCE_DENIED = 1;
     static final int CODE_USER_EXISTENCE_NOT_CHECKED = 2;
@@ -454,7 +450,7 @@ public class EditDebtActivity extends AppCompatActivity {
         debtId = getIntent().getStringExtra(Debt.KEY_UUID);
         debtOtherId = getIntent().getStringExtra(Debt.KEY_OTHER_UUID);
         debtTabTag = getIntent().getStringExtra(Debt.KEY_TAB_TAG);
-        isFocusOnPhone = getIntent().getBooleanExtra(FOCUS_ON_PHONE_EXTRA,false);
+        isFocusOnPhone = getIntent().getBooleanExtra(FOCUS_ON_PHONE_EXTRA, false);
     }
 
     /**
@@ -463,10 +459,14 @@ public class EditDebtActivity extends AppCompatActivity {
      * @param flags FLAG_SET_ALARM for setting the alarm if needed, and FLAG_FORCE_BACK_TO_MAIN for calling {@link MainActivity}.
      */
     private void wrapUp(int flags) {
+        Intent i = new Intent();
+        if ((flags & FLAG_MERGE_NON_MONEY_DEBT) != 0) {
+            i.putExtra("debtToMerge", debtId);
+        }
         if ((flags & FLAG_SET_ALARM) != 0) {
             setAlarm(debt);
         }
-        setResult(Activity.RESULT_OK);
+        setResult(Activity.RESULT_OK,i);
         finish();
         if ((flags & FLAG_FORCE_BACK_TO_MAIN) != 0) {
             returnToMain(debt); // in case the activity was not started for a result
@@ -475,7 +475,6 @@ public class EditDebtActivity extends AppCompatActivity {
 
     public void startCamera() {
         Intent intent = new Intent(getApplicationContext(), CameraActivity.class);
-        intent.putExtra(Debt.KEY_UUID, debt.getUuidString());
         startActivityForResult(intent, CAMERA_ACTIVITY_CODE);
     }
 

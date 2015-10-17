@@ -27,6 +27,7 @@ import com.melnykov.fab.FloatingActionButton;
 import com.parse.ParseException;
 import com.parse.ParseQuery;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -446,13 +447,17 @@ public class ChartFragment extends android.support.v4.app.Fragment {
         });
         data.setValueTextSize(10f);
 
+
         if (mCurrentDataHeaders == null || rightIndex < 0) {
             mChart.setCenterText("Add money debts in list mode.");
             rangeBar.setVisibility(View.INVISIBLE);
             minIndexView.setVisibility(View.INVISIBLE);
             maxIndexView.setVisibility(View.INVISIBLE);
         } else {
-            mChart.setCenterText("Total Value\n" + totalValue + "\n(all slices)");
+            DecimalFormat decimalFormat = new DecimalFormat();
+            decimalFormat.setDecimalSeparatorAlwaysShown(false);
+            String totalValueStr = decimalFormat.format(totalValue);
+            mChart.setCenterText("Total Value\n" + totalValueStr + "\n(all slices)");
             rangeBar.setVisibility(View.VISIBLE);
             minIndexView.setVisibility(View.VISIBLE);
             maxIndexView.setVisibility(View.VISIBLE);
