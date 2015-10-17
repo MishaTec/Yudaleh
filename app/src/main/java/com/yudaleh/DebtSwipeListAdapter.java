@@ -119,6 +119,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
         }
 
         // Action 1:
+        holder.action1.setText(debt.isReturned() ? R.string.action1_text_returned : R.string.action1_text);
         holder.action1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -130,6 +131,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
                     e.printStackTrace();
                 }
                 sendPushResponse(debt);
+                notifyDataSetChanged();
             }
         });
 
@@ -147,7 +149,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
             holder.action2.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    openEditView(debt);// TODO: 11/10/2015 just set phone? or we do want the search feature
+                    openEditViewWithFocusOnPhone(debt);// TODO: 11/10/2015 just set phone? or we do want the search feature
                 }
             });
         }
@@ -299,7 +301,6 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
     }
 
 
-
     /**
      * Show a confirmation push notification dialog, with an option to call the owner.
      */
@@ -358,10 +359,11 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
     }
 
     // Helper methods: -----------------------------------------------------------------------------
-    private void openEditView(Debt debt) {
+    private void openEditViewWithFocusOnPhone(Debt debt) {
         Intent i = new Intent(mContext, EditDebtActivity.class);
         i.putExtra(Debt.KEY_UUID, debt.getUuidString());
         i.putExtra(Debt.KEY_TAB_TAG, debt.getTabTag());
+        i.putExtra(EditDebtActivity.FOCUS_ON_PHONE_EXTRA,true);
         mContext.startActivity(i);
     }
 

@@ -164,8 +164,9 @@
     <string name="dismiss">Dismiss</string>
     <string name="discard">Discard</string>
     <string name="action1_text">Mark done</string>
+    <string name="action1_text_returned">Unmark done</string>
     <string name="action2_text_with_phone">Contact owner</string>
-    <string name="action2_text_no_phone">(no phone)</string>
+    <string name="action2_text_no_phone">Add phone</string>
     <string name="action3_text">Reminder</string>
 
     <string name="rightOffset">Right Offset (%1$s dp)</string>

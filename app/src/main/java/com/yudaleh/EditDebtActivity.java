@@ -94,6 +94,9 @@ public class EditDebtActivity extends AppCompatActivity {
     static final String PUSH_TITLE_MODIFIED = "Modified";
     static final String PUSH_TITLE_RESPONSE = "Response";
 
+    static final String FOCUS_ON_PHONE_EXTRA = "editPhone";
+
+
     private Button remindButton;
     private CheckBox remindCheckBox;
     private CheckBox pushCheckBox;
@@ -118,6 +121,7 @@ public class EditDebtActivity extends AppCompatActivity {
     private Debt beforeChange;
     private int currencyPos;
     private boolean isSendPushToOwner = false;
+    private boolean isFocusOnPhone;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -183,6 +187,7 @@ public class EditDebtActivity extends AppCompatActivity {
             public void onDateTimeSet(Date date) {
                 date.setSeconds(0);
                 remindButton.setText(DateFormat.format("MM/dd/yy h:mmaa", date.getTime()));
+                remindCheckBox.setChecked(true);
                 remindCheckBox.setChecked(true);
                 debt.setDueDate(date);
             }
@@ -449,6 +454,7 @@ public class EditDebtActivity extends AppCompatActivity {
         debtId = getIntent().getStringExtra(Debt.KEY_UUID);
         debtOtherId = getIntent().getStringExtra(Debt.KEY_OTHER_UUID);
         debtTabTag = getIntent().getStringExtra(Debt.KEY_TAB_TAG);
+        isFocusOnPhone = getIntent().getBooleanExtra(FOCUS_ON_PHONE_EXTRA,false);
     }
 
     /**
@@ -959,6 +965,9 @@ public class EditDebtActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> parent) {
             }
         });
+        if (isFocusOnPhone) {
+            requestViewFocus(debtPhoneText);
+        }
     }
 
     /**
@@ -1076,6 +1085,9 @@ public class EditDebtActivity extends AppCompatActivity {
         searchAutoComplete.setTextColor(Color.WHITE);
         // set the hint text color
         searchAutoComplete.setHintTextColor(Color.WHITE);
+        //Some drawable (e.g. from xml)
+        searchAutoComplete.setDropDownBackgroundResource(R.drawable.search_autocomplete_dropdown);
+
         searchAutoComplete.setNextFocusDownId(R.id.debt_title);
         searchAutoComplete.setOnEditorActionListener(new EditText.OnEditorActionListener() {
             @Override

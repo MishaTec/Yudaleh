@@ -90,7 +90,8 @@
             android:layout_height="wrap_content"
             android:baselineAligned="false"
             android:gravity="bottom"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:paddingBottom="30dp">
 
             <CheckBox
                 android:id="@+id/remind_checkbox"
@@ -114,7 +115,8 @@
             android:layout_height="wrap_content"
             android:checked="false"
             android:text="@string/push_checkbox_text"
-            android:visibility="gone" />
+            android:visibility="gone"
+            />
 
     </LinearLayout>
 

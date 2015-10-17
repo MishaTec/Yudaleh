@@ -4,4 +4,4 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/timePicker"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content" /><!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/src/main/res/layout/fragment_time.xml --><!-- From: file:/C:/Users/Dmitry/StudioProjects/Yudaleh/slideDateTimePicker/build/intermediates/bundles/debug/res/layout/fragment_time.xml -->
+    android:layout_height="wrap_content" /><!-- From: file:/C:/Users/Michael/AndroidStudioProjects/Yudaleh/slideDateTimePicker/src/main/res/layout/fragment_time.xml --><!-- From: file:/C:/Users/Michael/AndroidStudioProjects/Yudaleh/slideDateTimePicker/build/intermediates/bundles/debug/res/layout/fragment_time.xml -->

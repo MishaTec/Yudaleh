@@ -147,6 +147,16 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
         swipeListView.setSwipeListViewListener(new BaseSwipeListViewListener() {
 
             @Override
+            public void onChoiceChanged(int position, boolean selected) {
+                super.onChoiceChanged(position, selected);
+                if (selected) {
+                    swipeListView.dismissSelected();
+                    swipeListView.notify();
+                }
+            }
+
+
+            @Override
             public void onClickFrontView(int position) {
                 openEditView(debt);
             }
@@ -156,7 +166,7 @@ class DebtListAdapter extends ParseQueryAdapter<Debt> implements /*PinnedSection
                 for (int position : reverseSortedPositions) {
 //                    System.out.println("dismiss: " + groupPosition + ", " + position);// REMOVE: 07/10/2015
                 }
-//                adapter.notifyDataSetChanged();
+                swipeListView.getAdapter().notifyDataSetChanged();
             }*/
 
         });
