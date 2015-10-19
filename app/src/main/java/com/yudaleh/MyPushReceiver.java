@@ -10,6 +10,7 @@ import android.graphics.drawable.Icon;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
+import android.support.v4.content.LocalBroadcastManager;
 
 import com.parse.GetCallback;
 import com.parse.ParseException;
@@ -33,6 +34,9 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
     private boolean isResponsePush = false;
     private boolean isNew = true;
     private boolean isReturned = false;
+    private Intent broadcastIntent = new Intent("com.yudaleh.MainActivity");
+    private LocalBroadcastManager broadcaster;
+
 
     @Override
     public void onPushReceive(final Context context, Intent intent) {
@@ -50,6 +54,7 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        broadcaster = LocalBroadcastManager.getInstance(context);
         if (!isResponsePush) {
             if (isNew) {
                 title = "Debt created";
@@ -100,7 +105,8 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
                         @Override
                         public void done(ParseException e) {
                             if (e == null) {
-                                // todo use broadcast, or update current if opened (same fragment)
+                                broadcastIntent.putExtra("update", true);
+                                broadcaster.sendBroadcast(broadcastIntent);
                             }
                         }
                     });

@@ -103,6 +103,12 @@ public class MainActivity extends AppCompatActivity {
                 if (!success) {
                     Toast.makeText(getApplicationContext(), "Messaging service failed to start", Toast.LENGTH_LONG).show();
                 }
+                Boolean update = intent.getBooleanExtra("update", false);
+                if (update) {
+                    FragmentManager fragmentManager = getSupportFragmentManager();
+                    ((ListViewFragment)fragmentManager.getFragments().get(0)).debtListAdapter.notifyDataSetChanged();
+                }
+
             }
         };
         LocalBroadcastManager.getInstance(this).registerReceiver(receiver, new IntentFilter("com.yudaleh.MainActivity"));
