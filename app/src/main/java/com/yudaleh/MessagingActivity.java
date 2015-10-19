@@ -12,9 +12,13 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.parse.FindCallback;
+import com.parse.ParseException;
+import com.parse.ParseInstallation;
 import com.parse.ParseObject;
+import com.parse.ParsePush;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
+import com.parse.SendCallback;
 import com.sinch.android.rtc.PushPair;
 import com.sinch.android.rtc.messaging.Message;
 import com.sinch.android.rtc.messaging.MessageClient;
@@ -170,7 +174,31 @@ public class MessagingActivity extends Activity {
 
         @Override
         public void onShouldSendPushData(MessageClient client, Message message, List<PushPair> pushPairs) {
-            int y = 5;
+            final WritableMessage writableMessage = new WritableMessage(message.getRecipientIds().get(0), message.getTextBody());
+
+            ParseQuery userQuery = ParseUser.getQuery();
+            userQuery.whereEqualTo("objectId", writableMessage.getRecipientIds().get(0));
+
+            ParseQuery pushQuery = ParseInstallation.getQuery();
+            pushQuery.whereMatchesQuery("idutente", userQuery);
+
+            // Send push notification to query
+            ParsePush push = new ParsePush();
+            push.setQuery(pushQuery); // Set our Installation query
+            push.setMessage("sent you a message");
+            push.sendInBackground(new SendCallback() {
+                @Override
+                public void done(ParseException e) {
+
+                    if(e==null){
+
+                    }else{
+                        e.printStackTrace();
+                    }
+
+
+                }
+            });
         }
     }
 }
