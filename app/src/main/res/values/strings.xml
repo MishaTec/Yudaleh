@@ -121,6 +121,9 @@
     <string name="delete">Delete</string>
     <string name="delete_confirm_message">Delete debt?</string>
     <string name="deny_confirm_message">Deny debt?</string>
+    <string name="accept">Accept</string>
+    <string name="deny">Deny</string>
+    <string name="push_confirm_message">Accept debt?</string>
     <string name="save_changes_confirm">Save changes?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>

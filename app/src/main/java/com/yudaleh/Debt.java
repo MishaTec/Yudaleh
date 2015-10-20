@@ -141,6 +141,15 @@ public class Debt extends ParseObject {
         }
     }
 
+    void setOwnerPhone(String ownerPhone) {
+        if (ownerPhone != null && ownerPhone.length() > 0) {
+            // Format phone number to E164 standard to use it as a unique identifier
+            put(KEY_OWNER_PHONE, ownerPhone);
+        } else {
+            remove(KEY_OWNER_PHONE);
+        }
+    }
+
     private String formatToE164(String phone, String userCountry) {
         if (phone == null) {
             return null;

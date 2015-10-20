@@ -47,6 +47,9 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
     private final int mResource;
 
 
+    static final int RESPONSE_CODE_TOGGLE_RETURNED = 0;
+    static final int RESPONSE_CODE_DUE_DATE_CHANGED = 1;
+
     static final int ACTION_CALL = 0;
     static final int ACTION_SMS = 1;
     static final int ACTION_CHAT = 2;
@@ -130,7 +133,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
-                sendPushResponse(debt);
+                sendPushResponse(debt, RESPONSE_CODE_TOGGLE_RETURNED);
                 notifyDataSetChanged();
             }
         });
@@ -177,26 +180,35 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
 */
 
 //String extra = "\n"+debt.getUuidString()+"<-"+debt.getOtherUuid(); // REMOVE: 24/09/2015
-        String titleStr = debt.getTitle() + " stat: " + debt.getStatus();
-        debtTitle.setText(titleStr);
+        String titleStr = debt.getTitle();
+
         if (debt.isDraft()) {
             debtTitle.setTypeface(null, Typeface.ITALIC);
-            debtTitle.setTextColor(Color.RED);// TODO: 02/09/2015 GRAY
-
+            debtTitle.setTextColor(Color.GRAY);
         } else {
             debtTitle.setTypeface(null, Typeface.NORMAL);
-            if (debt.getStatus() == Debt.STATUS_CREATED) {
-                debtTitle.setTextColor(Color.BLACK);
-            } else if (debt.getStatus() == Debt.STATUS_PENDING) {
-                debtTitle.setTextColor(Color.GREEN);
-            } else if (debt.getStatus() == Debt.STATUS_CONFIRMED) {
-                debtTitle.setTextColor(Color.BLUE);
-            } else if (debt.isReturned()) {// TODO: 08/10/2015
-                debtTitle.setTextColor(Color.MAGENTA);
-            } else if (debt.getStatus() == Debt.STATUS_DELETED) {
-                debtTitle.setTextColor(Color.YELLOW);
-            }
+            debtTitle.setTextColor(Color.BLACK);
         }
+
+        if (debt.isReturned()) {
+            debtTitle.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_done_all_black_24dp, 0);
+        } else if (debt.getStatus() == Debt.STATUS_CONFIRMED) {
+            debtTitle.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_done_black_24dp, 0);
+        } else if (debt.getStatus() == Debt.STATUS_PENDING) {
+            debtTitle.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_access_time_black_24dp, 0);
+        } else if (debt.getStatus() == Debt.STATUS_DENIED) {
+            titleStr += " (denied)";
+            debtTitle.setTextColor(Color.RED);
+            debtTitle.setTypeface(null, Typeface.BOLD);
+            debtTitle.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_block_black_24dp, 0);
+        } else if (debt.getStatus() == Debt.STATUS_DELETED) {
+            titleStr += " (deleted)";
+            debtTitle.setTextColor(Color.RED);
+            debtTitle.setTypeface(null, Typeface.BOLD);
+            debtTitle.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_error_outline_black_24dp, 0);
+        }
+        debtTitle.setText(titleStr);
+
 /*        String created = null;
         Date createdDate = debt.getDateCreated();
         if(createdDate!=null) {
@@ -224,7 +236,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
     /**
      * Synchronize the status of the other end
      */
-    private void sendPushResponse(Debt debt) {
+    private void sendPushResponse(Debt debt, int responseCode) {
         String ownerPhone = debt.getOwnerPhone();
         String otherUuid = debt.getOtherUuid();
         if (ownerPhone == null) {
@@ -236,9 +248,20 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
 
         JSONObject jsonObject;
         try {
-            String title = EditDebtActivity.PUSH_TITLE_RESPONSE;
+            String title;
+            switch (responseCode) {
+                case RESPONSE_CODE_TOGGLE_RETURNED:
+                    title = debt.getOwnerName() + " marked " + debt.getTitle() + " as " + (debt.isReturned() ? "" : "not ") + "returned";
+                    break;
+                case RESPONSE_CODE_DUE_DATE_CHANGED:
+                    title = debt.getOwnerName() + " changed due date of: " + debt.getTitle();
+                    break;
+                default:
+                    return;
+            }
             jsonObject = new JSONObject();
             jsonObject.put("title", title);
+            jsonObject.put(Debt.KEY_IS_RETURNED, debt.isReturned());
             jsonObject.put(Debt.KEY_STATUS, debt.getStatus());
             jsonObject.put(Debt.KEY_UUID, debt.getUuidString());
             jsonObject.put(Debt.KEY_OTHER_UUID, otherUuid);
@@ -281,7 +304,7 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
-                sendPushResponse(debt);
+                sendPushResponse(debt, RESPONSE_CODE_DUE_DATE_CHANGED);
                 notifyDataSetChanged();
             }
 

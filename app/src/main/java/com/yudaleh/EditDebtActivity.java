@@ -215,7 +215,7 @@ public class EditDebtActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.edit_debt, menu);
         setupSearch(menu);
         MenuItem deleteMenuItem = menu.findItem(R.id.action_delete);
-        if (isNew) {
+        if (isNew && !isFromPush) {
             deleteMenuItem.setVisible(false);
         } else {
             deleteMenuItem.setVisible(true);
@@ -231,7 +231,7 @@ public class EditDebtActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case android.R.id.home:
                 setDebtFieldsAfterEditing();
-                if (isModified) {
+                if (isModified || isFromPush) {
                     showSaveChangesConfirm();
                     return true;
                 }
@@ -340,31 +340,48 @@ public class EditDebtActivity extends AppCompatActivity {
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        String ownerPhone = debt.getOwnerPhone();
-                        if (isExistingUser(ownerPhone)) {
-                            int status;
-                            if (isFromPush) {
-                                status = Debt.STATUS_DENIED;
-                            } else {
-                                status = Debt.STATUS_DELETED;
-                            }
-                            sendPushResponse(ownerPhone, status);
-                        }
-                        cancelAlarm(debt);
-                        // The debt will be deleted eventually but will immediately be excluded from mQuery results.
-                        debt.deleteEventually();
-                        setResult(Activity.RESULT_OK);
-                        finish();
+                        deleteOrDenyDebtAndFinish();
                     }
                 })
                 .setNegativeButton(android.R.string.no, null)
                 .show();
     }
 
+    private void deleteOrDenyDebtAndFinish() {
+        String ownerPhone = debt.getOwnerPhone();
+        int status;
+        if (isFromPush) {
+            status = Debt.STATUS_DENIED;
+        } else {
+            status = Debt.STATUS_DELETED;
+        }
+        if (!debt.isReturned()) {
+            sendPushResponse(ownerPhone, status);
+        }
+        cancelAlarm(debt);
+        // The debt will be deleted eventually but will immediately be excluded from mQuery results.
+        debt.deleteEventually();
+        setResult(Activity.RESULT_OK);
+        finish();
+    }
+
     private void showSaveChangesConfirm() {
+        int message;
+        int positiveText;
+        int negativeText;
+        if (isFromPush) {
+            message = R.string.deny_confirm_message;
+            positiveText = R.string.accept;
+            negativeText = R.string.deny;
+        } else {
+            positiveText = R.string.yes;
+            negativeText = R.string.no;
+            message = R.string.save_changes_confirm;
+        }
+
         (new AlertDialog.Builder(this))
-                .setMessage(R.string.save_changes_confirm)
-                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                .setMessage(message)
+                .setPositiveButton(positiveText, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (!validateDebtDetails()) {
@@ -374,10 +391,14 @@ public class EditDebtActivity extends AppCompatActivity {
                         // TODO: 9/30/2015 send update push
                     }
                 })
-                .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                .setNegativeButton(negativeText, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        revertChangesAndCancel();
+                        if (isFromPush) {
+                            deleteOrDenyDebtAndFinish();
+                        } else {
+                            revertChangesAndCancel();
+                        }
                     }
                 })
                 .show();
@@ -433,9 +454,8 @@ public class EditDebtActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         setDebtFieldsAfterEditing();
-        if (isModified) {
+        if (isModified || isFromPush) {
             showSaveChangesConfirm();
-            return;
         } else {
             super.onBackPressed();
         }
@@ -466,7 +486,7 @@ public class EditDebtActivity extends AppCompatActivity {
         if ((flags & FLAG_SET_ALARM) != 0) {
             setAlarm(debt);
         }
-        setResult(Activity.RESULT_OK,i);
+        setResult(Activity.RESULT_OK, i);
         finish();
         if ((flags & FLAG_FORCE_BACK_TO_MAIN) != 0) {
             returnToMain(debt); // in case the activity was not started for a result
@@ -628,6 +648,10 @@ public class EditDebtActivity extends AppCompatActivity {
         query.whereEqualTo(Debt.KEY_UUID, debtOtherId);
         Debt other = query.getFirst();
         debt.setOtherUuid(debtOtherId);
+        debt.setReturned(other.isReturned());
+        debt.setTitle(other.getTitle());
+        debt.setOwnerPhone(other.getAuthorPhone());
+        debt.setOwnerName(other.getAuthorName());
         debt.setDateCreated(other.getDateCreated());
         debt.setTabTag(reverseTag(other.getTabTag()));
         debt.setThumbFile(other.getThumbFile());
@@ -703,7 +727,17 @@ public class EditDebtActivity extends AppCompatActivity {
 
         JSONObject jsonObject;
         try {
-            String title = PUSH_TITLE_RESPONSE;
+            String title;
+            switch (status) {
+                case Debt.STATUS_DENIED:
+                    title = debt.getOwnerName() + " denied debt: " + debt.getTitle();
+                    break;
+                case Debt.STATUS_DELETED:
+                    title = debt.getOwnerName() + " removed debt: " + debt.getTitle();
+                    break;
+                default:
+                    title = PUSH_TITLE_RESPONSE;
+            }
             jsonObject = new JSONObject();
             jsonObject.put("title", title);
             jsonObject.put(Debt.KEY_STATUS, status);
@@ -1248,9 +1282,9 @@ public class EditDebtActivity extends AppCompatActivity {
         am.set(AlarmManager.RTC_WAKEUP, timeInMillis, PendingIntent.getBroadcast(
                 this, alarmId, alertIntent, PendingIntent.FLAG_UPDATE_CURRENT));
 
-        Toast.makeText(this, "Reminder  " + alarmId + " at "
-                        + DateFormat.format("MM/dd/yy h:mmaa", timeInMillis),
-                Toast.LENGTH_LONG).show();// REMOVE: 07/09/2015
+//        Toast.makeText(this, "Reminder  " + alarmId + " at "
+//                        + DateFormat.format("MM/dd/yy h:mmaa", timeInMillis),
+//                Toast.LENGTH_LONG).show();// REMOVE: 07/09/2015
     }
 
     /**
@@ -1268,6 +1302,6 @@ public class EditDebtActivity extends AppCompatActivity {
         AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
         am.cancel(PendingIntent.getBroadcast(this, alarmId, alertIntent, PendingIntent.FLAG_UPDATE_CURRENT));
 
-        Toast.makeText(this, "REMOVED Reminder " + alarmId, Toast.LENGTH_LONG).show(); // REMOVE: 07/09/2015
+//        Toast.makeText(this, "REMOVED Reminder " + alarmId, Toast.LENGTH_LONG).show(); // REMOVE: 07/09/2015
     }
 }

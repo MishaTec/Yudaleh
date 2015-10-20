@@ -100,15 +100,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Boolean success = intent.getBooleanExtra("success", false);
-                if (!success) {
+                Boolean update = intent.getBooleanExtra("update", false);
+                if (!success && !update) {
                     Toast.makeText(getApplicationContext(), "Messaging service failed to start", Toast.LENGTH_LONG).show();
                 }
-                Boolean update = intent.getBooleanExtra("update", false);
                 if (update) {
-                    FragmentManager fragmentManager = getSupportFragmentManager();
-                    ((ListViewFragment)fragmentManager.getFragments().get(0)).debtListAdapter.notifyDataSetChanged();
+                    updateView();
                 }
-
             }
         };
         LocalBroadcastManager.getInstance(this).registerReceiver(receiver, new IntentFilter("com.yudaleh.MainActivity"));
@@ -125,6 +123,19 @@ public class MainActivity extends AppCompatActivity {
             String uuid = intent.getStringExtra(Debt.KEY_UUID);
             openEditView(uuid);
         }*/// REMOVE: 08/09/2015
+    }
+
+    void updateView() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        if (fragmentManager != null) {
+            List<Fragment> fragments = fragmentManager.getFragments();
+            if (fragments != null && fragments.size() > 0) {
+                Fragment fragment = fragments.get(0);
+                if (fragment != null && fragment instanceof ListViewFragment) {
+                    ((ListViewFragment) fragment).updateView();
+                }
+            }
+        }
     }
 
     @Override
@@ -144,6 +155,10 @@ public class MainActivity extends AppCompatActivity {
             syncDebtsToParse(!SHOW_LOGIN_ON_ERROR);// TODO: 19/09/2015 make sure it's called after on result from login, so no accidental debts are uploaded
             // Update the title
             updateLoggedInInfo();
+
+            // unregisterChattingWithKey
+            currUser.remove("chattingWith");
+            currUser.saveInBackground();
         } else {
             // In case the user is logged out, the sync option works as login
             setSyncOptionVisibility(true);
@@ -162,6 +177,13 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         updateLoggedInInfo();
+
+        if (intent != null && intent.getBooleanExtra("isChatPush", false)) {
+            intent.removeExtra("isChatPush");
+            Intent messagingIntent = new Intent(getApplicationContext(), MessagingActivity.class);
+            messagingIntent.putExtra("RECIPIENT_ID", intent.getStringExtra("SENDER_ID"));
+            startActivity(messagingIntent);
+        }
     }
 
     @Override
@@ -186,16 +208,27 @@ public class MainActivity extends AppCompatActivity {
             backToast.show();
         }
     }
-/*    @Override
+
+    @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        if (intent != null && intent.hasExtra(Debt.KEY_UUID)) {
-            String uuid = intent.getStringExtra(Debt.KEY_UUID);
-            intent.removeExtra(Debt.KEY_UUID);
-            openEditView(uuid);
+        if (intent != null && intent.hasExtra(Debt.KEY_TAB_TAG)) {
+            String tabTag = intent.getStringExtra(Debt.KEY_TAB_TAG);
+            ActionBar actionBar = getSupportActionBar();
+            if (tabTag.equals(Debt.I_OWE_TAG)) {
+                actionBar.selectTab(actionBar.getTabAt(I_OWE_TAB_INDEX));
+            } else {
+                actionBar.selectTab(actionBar.getTabAt(OWE_ME_TAB_INDEX));
+            }
         }
-    }*/// REMOVE: 08/09/2015
+
+//        if (intent != null && intent.hasExtra(Debt.KEY_UUID)) {
+//            String uuid = intent.getStringExtra(Debt.KEY_UUID);
+//            intent.removeExtra(Debt.KEY_UUID);
+//            openEditView(uuid);
+//        }
+    }
 
 
     @SuppressWarnings("deprecation")
@@ -340,7 +373,7 @@ public class MainActivity extends AppCompatActivity {
                 TextView content = (TextView) getLayoutInflater().inflate(R.layout.about_view, null);
                 content.setMovementMethod(LinkMovementMethod.getInstance());
                 countSavedAndPinnedObjects();
-                content.setText(Html.fromHtml(getString(R.string.about_body)) + "\npinned: " + numPinned + "\nsaved: " + numSaved);// TODO: 11/10/2015 clean
+                content.setText(Html.fromHtml(getString(R.string.about_body))/* + "\npinned: " + numPinned + "\nsaved: " + numSaved*/);// TODO: 11/10/2015 clean
                 // REMOVE: 07/09/2015 info
 /*                ParseUser curr = ParseUser.getCurrentUser();
                 if (curr != null) {
@@ -393,10 +426,7 @@ public class MainActivity extends AppCompatActivity {
         isChartMode = !isChartMode;
         chartModeMenuItem.setVisible(!isChartMode);
         listModeMenuItem.setVisible(isChartMode);
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null && actionBar.getSelectedTab() != null) {
-            actionBar.getSelectedTab().select();
-        }
+        updateView();
     }
 
     private void countSavedAndPinnedObjects() {
@@ -451,16 +481,7 @@ public class MainActivity extends AppCompatActivity {
         // log in was successful
         if (resultCode == RESULT_OK) {
             if (requestCode == EDIT_ACTIVITY_CODE || requestCode == EDIT_ACTIVITY_FRAGMENT_CODE) {
-                // Coming back from the edit view, update the view
-                // REMOVE: 07/09/2015 debtListAdapter.loadObjects();
-                if (data != null && data.hasExtra(Debt.KEY_TAB_TAG)) {
-//                    String tabTag = data.getStringExtra(Debt.KEY_TAB_TAG);
-//                    if (tabTag.equals(Debt.I_OWE_TAG) && iOweViewFragmentWithTag != null) {
-//                        iOweViewFragment.updateView();
-//                    } else if (oweMeViewFragmentWithTag != null) {
-//                        oweMeViewFragmentWithTag.updateView();
-//                    }
-                }
+                updateView();
             } else if (requestCode == LOGIN_ACTIVITY_CODE) {
                 // If the user is new, sync data to Parse, otherwise get the current list from Parse
                 ParseUser currUser = ParseUser.getCurrentUser();
@@ -472,9 +493,8 @@ public class MainActivity extends AppCompatActivity {
                         loadFromParse();
                     }
                 }
-                updateLoggedInInfo();// TODO: 05/09/2015 remove?
-                ActionBar actionBar = getSupportActionBar();
-                actionBar.selectTab(actionBar.getSelectedTab());// FIXME: 08/10/2015 make sure it refreshes
+                updateLoggedInInfo();
+                updateView();
             }
         }
 
@@ -545,9 +565,7 @@ public class MainActivity extends AppCompatActivity {
         // Update the logged in label info
         updateLoggedInInfo();
 
-        // Refresh tab content
-        ActionBar actionBar = getSupportActionBar();
-        actionBar.selectTab(actionBar.getSelectedTab());// FIXME: 08/10/2015 make sure it refreshes
+        updateView();
 
         // Makes sure the menu is consistent
         supportInvalidateOptionsMenu();
@@ -714,13 +732,13 @@ public class MainActivity extends AppCompatActivity {
         am.set(AlarmManager.RTC_WAKEUP, timeInMillis, PendingIntent.getBroadcast(
                 this, alarmId, alertIntent, PendingIntent.FLAG_UPDATE_CURRENT));
 
-        Toast.makeText(
-                this,
-                "Reminder  " + alarmId + " at "
-                        + android.text.format.DateFormat.format(
-                        "MM/dd/yy h:mmaa",
-                        timeInMillis),
-                Toast.LENGTH_LONG).show();// REMOVE: 07/09/2015
+//        Toast.makeText(
+//                this,
+//                "Reminder  " + alarmId + " at "
+//                        + android.text.format.DateFormat.format(
+//                        "MM/dd/yy h:mmaa",
+//                        timeInMillis),
+//                Toast.LENGTH_LONG).show();// REMOVE: 07/09/2015
     }
 
     /**
@@ -738,7 +756,7 @@ public class MainActivity extends AppCompatActivity {
         AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
         am.cancel(PendingIntent.getBroadcast(this, alarmId, alertIntent, PendingIntent.FLAG_UPDATE_CURRENT));
 
-        Toast.makeText(this, "REMOVED Reminder " + alarmId, Toast.LENGTH_LONG).show(); // REMOVE: 07/09/2015
+//        Toast.makeText(this, "REMOVED Reminder " + alarmId, Toast.LENGTH_LONG).show(); // REMOVE: 07/09/2015
     }
 
 

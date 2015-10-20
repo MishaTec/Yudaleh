@@ -16,7 +16,6 @@ import com.parse.GetCallback;
 import com.parse.ParseException;
 import com.parse.ParsePushBroadcastReceiver;
 import com.parse.ParseQuery;
-import com.parse.ParseUser;
 import com.parse.SaveCallback;
 
 import org.json.JSONException;
@@ -36,6 +35,12 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
     private boolean isReturned = false;
     private Intent broadcastIntent = new Intent("com.yudaleh.MainActivity");
     private LocalBroadcastManager broadcaster;
+    private String senderName;
+    private String senderPhone;
+    private boolean isChatPush = false;
+    private String senderId;
+    private String personPhone;
+    private String personName;
 
 
     @Override
@@ -44,15 +49,48 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
         JSONObject jsonObject;
         try {
             jsonObject = new JSONObject(intent.getStringExtra(MyPushReceiver.KEY_PUSH_DATA));
-            isNew = jsonObject.getBoolean("isNew");
-            isResponsePush = jsonObject.getBoolean("isResponsePush");
-            isReturned = jsonObject.getBoolean(Debt.KEY_IS_RETURNED);
-            debtStatus = jsonObject.getInt(Debt.KEY_STATUS);
-            debtOtherId = jsonObject.getString(Debt.KEY_UUID);
-            debtId = jsonObject.getString(Debt.KEY_OTHER_UUID);
-            title = jsonObject.getString("title");
+            if (jsonObject.has("isNew")) {
+                isNew = jsonObject.getBoolean("isNew");
+            }
+            if (jsonObject.has("isResponsePush")) {
+
+                isResponsePush = jsonObject.getBoolean("isResponsePush");
+            }
+            if (jsonObject.has("isChatPush")) {
+                isChatPush = jsonObject.getBoolean("isChatPush");
+            }
+            if (jsonObject.has("SENDER_ID")) {
+                senderId = jsonObject.getString("SENDER_ID");
+            }
+            if (jsonObject.has("SENDER_NAME")) {
+
+                senderName = jsonObject.getString("SENDER_NAME");
+            }     
+            if (jsonObject.has("SENDER_PHONE")) {
+
+                senderPhone = jsonObject.getString("SENDER_PHONE");
+            }
+            if (jsonObject.has("title")) {
+
+                title = jsonObject.getString("title");
+            }
+            if (jsonObject.has(Debt.KEY_IS_RETURNED)) {
+                isReturned = jsonObject.getBoolean(Debt.KEY_IS_RETURNED);
+            }
+            if (jsonObject.has(Debt.KEY_STATUS)) {
+                debtStatus = jsonObject.getInt(Debt.KEY_STATUS);
+            }
+            if (jsonObject.has(Debt.KEY_UUID)) {
+                debtOtherId = jsonObject.getString(Debt.KEY_UUID);
+            }
+            if (jsonObject.has(Debt.KEY_OTHER_UUID)) {
+                debtId = jsonObject.getString(Debt.KEY_OTHER_UUID);
+            }
         } catch (JSONException e) {
             e.printStackTrace();
+        }
+        if (isChatPush) {
+            createNotification(context, senderName, title, senderName + ": " + title);
         }
         broadcaster = LocalBroadcastManager.getInstance(context);
         if (!isResponsePush) {
@@ -111,7 +149,9 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
                         }
                     });
                 }
-                createNotification(context, pushTitle, pushText, pushAlert);
+                if (pushTitle != null && !pushTitle.equals(EditDebtActivity.PUSH_TITLE_RESPONSE)) {
+                    createNotification(context, pushTitle, pushText, pushAlert);
+                }
             }
 
         });
@@ -126,16 +166,32 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
      * @param alert   shows on the top bar for one second
      */
     private void createNotification(Context context, String title, String text, String alert) {
-        String uuidString = debt.getUuidString();
-        int alarmId = uuidString.hashCode();
-        Intent intent = new Intent(context, EditDebtActivity.class);
-//        intent.setFlags(/*Intent.FLAG_ACTIVITY_REORDER_TO_FRONT*/ /*Intent.FLAG_ACTIVITY_SINGLE_TOP | */Intent.FLAG_ACTIVITY_CLEAR_TOP);// REMOVE: 14/09/2015
-        intent.putExtra(Debt.KEY_UUID, debtId);
-        intent.putExtra(Debt.KEY_OTHER_UUID, debtOtherId);
-        intent.putExtra(Debt.KEY_TAB_TAG, debt.getTabTag());
-        intent.putExtra("fromPush", true);
-        intent.putExtra("isNew", isNew);
+        Intent intent;
+        int alarmId;
 
+        if (isChatPush) {
+            intent = new Intent(context, MainActivity.class);
+            intent.putExtra("SENDER_ID", senderId);
+            intent.putExtra("isChatPush", true);
+            intent.putExtra("fromPush", true);
+            intent.putExtra(Debt.KEY_TAB_TAG, Debt.I_OWE_TAG);
+            intent.putExtra("isNew", false);
+            alarmId = senderId.hashCode();
+            personPhone = senderPhone;
+            personName = senderName;
+        } else {
+            personPhone = debt.getAuthorPhone();
+            personName = debt.getAuthorName();
+            String uuidString = debt.getUuidString();
+            alarmId = uuidString.hashCode();
+            intent = new Intent(context, EditDebtActivity.class);
+            intent.setFlags(/*Intent.FLAG_ACTIVITY_REORDER_TO_FRONT*/ Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);// REMOVE: 14/09/2015
+            intent.putExtra(Debt.KEY_UUID, debtId);
+            intent.putExtra(Debt.KEY_OTHER_UUID, debtOtherId);
+            intent.putExtra(Debt.KEY_TAB_TAG, debt.getTabTag());
+            intent.putExtra("fromPush", true);
+            intent.putExtra("isNew", isNew);
+        }
         PendingIntent notificationIntent = PendingIntent.getActivity(context, 0, intent
                 , PendingIntent.FLAG_UPDATE_CURRENT);
         Notification.Builder builder = new Notification.Builder(context)
@@ -154,36 +210,35 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
     }
 
     private void addContactActions(Context context, Notification.Builder builder) {
-        String authorPhone = debt.getAuthorPhone();
-        String authorName = debt.getAuthorName();
-        if (authorPhone != null) {
+
+        if (personPhone != null) {
             // Create dialing action
-            String callTitle = "Call " + authorName;
+            String callTitle = "Call " + personName;
             int callIcon = R.drawable.ic_call_white_24dp;
-            Intent callIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + authorPhone));
+            Intent callIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + personPhone));
             PendingIntent notificationCallIntent = PendingIntent.getActivity(context, 0, callIntent
                     , PendingIntent.FLAG_UPDATE_CURRENT);
 
             // Create sms action
             int smsIcon = R.drawable.ic_call_white_24dp;
-            String smsTitle = "SMS " + authorName;
-            Intent smsIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", authorPhone, null));
+            String smsTitle = "SMS " + personName;
+            Intent smsIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", personPhone, null));
             PendingIntent notificationSmsIntent = PendingIntent.getActivity(context, 0, smsIntent
                     , PendingIntent.FLAG_UPDATE_CURRENT);
 
             // Create chat action
-            int chatIcon = R.drawable.ic_chat_white_24dp;
-            String chatTitle = "Chat " + authorName;
+/*            int chatIcon = R.drawable.ic_chat_white_24dp;
+            String chatTitle = "Chat " + personName;
             PendingIntent notificationChatIntent = null;
             try {
-                String objId = ParseUser.getQuery().whereEqualTo(MainActivity.PARSE_USER_PHONE_KEY, authorPhone).find().get(0).getObjectId();
+                String objId = ParseUser.getQuery().whereEqualTo(MainActivity.PARSE_USER_PHONE_KEY, personPhone).find().get(0).getObjectId();
                 Intent chatIntent = new Intent(context, MessagingActivity.class);
                 chatIntent.putExtra("RECIPIENT_ID", objId);
                 notificationChatIntent = PendingIntent.getActivity(context, 0, chatIntent
                         , PendingIntent.FLAG_UPDATE_CURRENT);
             } catch (ParseException e) {
                 e.printStackTrace();
-            }
+            }*/
 
             // Add all actions
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -197,13 +252,13 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
                         smsTitle,
                         notificationSmsIntent)
                         .build());
-                if (notificationChatIntent != null) {
+/*                if (notificationChatIntent != null) {
                     builder.addAction(new Notification.Action.Builder(
                             Icon.createWithResource(context, chatIcon),
                             chatTitle,
                             notificationChatIntent)
                             .build());
-                }
+                }*/
             } else {
                 //noinspection deprecation
                 builder.addAction(callIcon, callTitle, notificationCallIntent);

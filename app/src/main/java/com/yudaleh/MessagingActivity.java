@@ -27,6 +27,9 @@ import com.sinch.android.rtc.messaging.MessageDeliveryInfo;
 import com.sinch.android.rtc.messaging.MessageFailureInfo;
 import com.sinch.android.rtc.messaging.WritableMessage;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -42,6 +45,11 @@ public class MessagingActivity extends Activity {
     private ServiceConnection serviceConnection = new MyServiceConnection();
     private MessageClientListener messageClientListener = new MyMessageClientListener();
 
+    private String recipientPhone;
+    private ParseUser currUser;
+    private String currUserPhone;
+    private String currUserName;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,9 +60,11 @@ public class MessagingActivity extends Activity {
         Intent intent = getIntent();
         recipientId = intent.getStringExtra("RECIPIENT_ID");
 
-        ParseUser currUser = ParseUser.getCurrentUser();
+        currUser = ParseUser.getCurrentUser();// TODO: 20/10/2015 check if null
         if (currUser!=null) {
             currentUserId = currUser.getObjectId();
+            currUserName = currUser.getString(MainActivity.PARSE_USER_NAME_KEY);
+            currUserPhone = currUser.getString(MainActivity.PARSE_USER_PHONE_KEY);
         }
 
         messagesList = (ListView) findViewById(R.id.listMessages);
@@ -105,6 +115,72 @@ public class MessagingActivity extends Activity {
 
         messageService.sendMessage(recipientId, messageBody);
         messageBodyField.setText("");
+
+        ParseQuery<ParseUser> userQuery = ParseUser.getQuery();
+        userQuery.whereEqualTo("objectId", recipientId);
+        try {
+            ParseUser recipient = userQuery.getFirst();
+            String chattingWith = recipient.getString("chattingWith");
+            if (chattingWith == null || !chattingWith.equals(currUserPhone)) {
+                sendPush();
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendPush() {
+        try {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("title", messageBody);
+            jsonObject.put("isChatPush", true);
+            jsonObject.put("SENDER_ID", currentUserId);
+            jsonObject.put("SENDER_NAME", currUserName);
+            jsonObject.put("SENDER_PHONE", currUserPhone);
+            jsonObject.put("isNew", false);
+            jsonObject.put("isResponsePush", false);
+
+            ParsePush push = new ParsePush();
+            push.setChannel(MainActivity.USER_CHANNEL_PREFIX + recipientPhone.replaceAll("[^0-9]+", ""));
+            push.setData(jsonObject);
+            push.sendInBackground();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerChattingWithKey();
+    }
+
+    @Override
+    protected void onPause() {
+        unregisterChattingWithKey();
+        super.onPause();
+    }
+
+    private void registerChattingWithKey() {
+        ParseQuery<ParseUser> userQuery = ParseUser.getQuery();
+        userQuery.whereEqualTo("objectId", recipientId);
+        try {
+            ParseUser recipient = userQuery.getFirst();
+            recipientPhone = recipient.getString(MainActivity.PARSE_USER_PHONE_KEY);
+            if (currUser != null) {
+                currUser.put("chattingWith", recipientPhone);
+                currUser.saveInBackground();
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void unregisterChattingWithKey() {
+        if (currUser != null) {
+            currUser.remove("chattingWith");
+            currUser.saveInBackground();
+        }
     }
 
     @Override
@@ -174,7 +250,7 @@ public class MessagingActivity extends Activity {
 
         @Override
         public void onShouldSendPushData(MessageClient client, Message message, List<PushPair> pushPairs) {
-            final WritableMessage writableMessage = new WritableMessage(message.getRecipientIds().get(0), message.getTextBody());
+/*            final WritableMessage writableMessage = new WritableMessage(message.getRecipientIds().get(0), message.getTextBody());
 
             ParseQuery userQuery = ParseUser.getQuery();
             userQuery.whereEqualTo("objectId", writableMessage.getRecipientIds().get(0));
@@ -198,7 +274,7 @@ public class MessagingActivity extends Activity {
 
 
                 }
-            });
+            });*/
         }
     }
 }

@@ -89,8 +89,10 @@ public class ListViewFragment extends android.support.v4.app.Fragment {
         startActivityForResult(i, MainActivity.EDIT_ACTIVITY_CODE);
     }
 
-    private void updateView() {
-        debtListAdapter.update();
+    void updateView() {
+        if(debtListAdapter!=null) {
+            debtListAdapter.update();
+        }
         fab.show(false);
     }
 
