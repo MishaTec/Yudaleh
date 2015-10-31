@@ -5,8 +5,6 @@ Yudaleh
 
 Michael Zolotarevsky, Eilon Karty
 
-![Demo](art/demo.gif)
-
 ### Google Play link
 
 [![Yudaleh on Google Play Store](http://developer.android.com/images/brand/en_generic_rgb_wo_60.png)](https://play.google.com/store/apps/details?id=com.yudaleh.app)
