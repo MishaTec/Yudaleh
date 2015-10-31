@@ -78,14 +78,14 @@ public class DueDateAlarm extends BroadcastReceiver {
                     , PendingIntent.FLAG_UPDATE_CURRENT);
 
             // Create sms action
-            int smsIcon = R.drawable.ic_call_white_24dp;
+            int smsIcon = R.drawable.ic_sms_white_24dp;
             String smsTitle = "SMS " + ownerName;
             Intent smsIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", ownerPhone, null));
             PendingIntent notificationSmsIntent = PendingIntent.getActivity(context, 0, smsIntent
                     , PendingIntent.FLAG_UPDATE_CURRENT);
 
-            // Create chat action
-            int chatIcon = R.drawable.ic_call_white_24dp;
+/*            // Create chat action
+            int chatIcon = R.drawable.ic_sms_white_24dp;
             String chatTitle = "Chat " + ownerName;
             PendingIntent notificationChatIntent = null;
             try {
@@ -96,7 +96,7 @@ public class DueDateAlarm extends BroadcastReceiver {
                         , PendingIntent.FLAG_UPDATE_CURRENT);
             } catch (ParseException e) {
                 e.printStackTrace();
-            }
+            }*/
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 builder.addAction(new Notification.Action.Builder(
@@ -108,14 +108,14 @@ public class DueDateAlarm extends BroadcastReceiver {
                         Icon.createWithResource(context, smsIcon),
                         smsTitle,
                         notificationSmsIntent)
-                        .build());
-                if (notificationChatIntent != null) {
+                       .build());
+              /*  if (notificationChatIntent != null) {
                     builder.addAction(new Notification.Action.Builder(
                             Icon.createWithResource(context, chatIcon),
                             chatTitle,
                             notificationChatIntent)
                             .build());
-                }
+                }*/
             } else {
                 //noinspection deprecation
                 builder.addAction(callIcon, callTitle, notificationCallIntent);

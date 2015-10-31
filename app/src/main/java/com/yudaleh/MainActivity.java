@@ -426,7 +426,10 @@ public class MainActivity extends AppCompatActivity {
         isChartMode = !isChartMode;
         chartModeMenuItem.setVisible(!isChartMode);
         listModeMenuItem.setVisible(isChartMode);
-        updateView();
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null && actionBar.getSelectedTab() != null) {
+            actionBar.getSelectedTab().select();
+        }
     }
 
     private void countSavedAndPinnedObjects() {
@@ -495,6 +498,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 updateLoggedInInfo();
                 updateView();
+                supportInvalidateOptionsMenu();
             }
         }
 
@@ -557,7 +561,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void done(ParseException e) {
                 if (e != null) {// REMOVE: 08/10/2015
-                    Toast.makeText(MainActivity.this, "Failed to unpin: " + e.getMessage(), Toast.LENGTH_LONG).show();
+//                    Toast.makeText(MainActivity.this, "Failed to unpin: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 }
             }
         });

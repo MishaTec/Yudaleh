@@ -154,7 +154,7 @@ public class EditDebtActivity extends AppCompatActivity {
             prepareDebtForEditing();
         } catch (ParseException e) {
             e.printStackTrace();// REMOVE: 19/09/2015
-            Toast.makeText(EditDebtActivity.this, "Parse error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+//            Toast.makeText(EditDebtActivity.this, "Parse error: " + e.getMessage(), Toast.LENGTH_LONG).show();
             setResult(RESULT_CANCELED);
             finish();
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
@@ -220,7 +220,7 @@ public class EditDebtActivity extends AppCompatActivity {
         } else {
             deleteMenuItem.setVisible(true);
         }
-        if (isFromPush) {
+        if (isFromPush && isNew) {
             deleteMenuItem.setIcon(R.drawable.ic_cancel_white_36dp);
         }
         return super.onCreateOptionsMenu(menu);
@@ -539,9 +539,9 @@ public class EditDebtActivity extends AppCompatActivity {
                             }
                             wrapUp(flags);
                         } else {
-                            Toast.makeText(getApplicationContext(),
-                                    "Error saving: " + e.getMessage(),
-                                    Toast.LENGTH_LONG).show();
+//                            Toast.makeText(getApplicationContext(),
+//                                    "Error saving: " + e.getMessage(),
+//                                    Toast.LENGTH_LONG).show();
                         }
                     }
                 });
@@ -652,6 +652,8 @@ public class EditDebtActivity extends AppCompatActivity {
         debt.setTitle(other.getTitle());
         debt.setOwnerPhone(other.getAuthorPhone());
         debt.setOwnerName(other.getAuthorName());
+        debt.setAuthorPhone(other.getOwnerPhone());
+        debt.setAuthorName(other.getOwnerName());
         debt.setDateCreated(other.getDateCreated());
         debt.setTabTag(reverseTag(other.getTabTag()));
         debt.setThumbFile(other.getThumbFile());
@@ -730,10 +732,10 @@ public class EditDebtActivity extends AppCompatActivity {
             String title;
             switch (status) {
                 case Debt.STATUS_DENIED:
-                    title = debt.getOwnerName() + " denied debt: " + debt.getTitle();
+                    title = debt.getAuthorName() + " denied debt: " + debt.getTitle();
                     break;
                 case Debt.STATUS_DELETED:
-                    title = debt.getOwnerName() + " removed debt: " + debt.getTitle();
+                    title = debt.getAuthorName() + " removed debt: " + debt.getTitle();
                     break;
                 default:
                     title = PUSH_TITLE_RESPONSE;
@@ -758,9 +760,9 @@ public class EditDebtActivity extends AppCompatActivity {
                 public void done(ParseException e) {
                     if (e == null) {
                     } else {
-                        Toast.makeText(getApplicationContext(),
-                                "Push not sent: " + e.getMessage(),
-                                Toast.LENGTH_LONG).show();// REMOVE: 15/09/2015
+//                        Toast.makeText(getApplicationContext(),
+//                                "Push not sent: " + e.getMessage(),
+//                                Toast.LENGTH_LONG).show();// REMOVE: 15/09/2015
                     }
                 }
             });
@@ -840,9 +842,9 @@ public class EditDebtActivity extends AppCompatActivity {
                     intent.putExtra("RECIPIENT_ID", user.get(0).getObjectId());
                     startActivity(intent);
                 } else {
-                    Toast.makeText(getApplicationContext(),
-                            "Error finding that user",
-                            Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(getApplicationContext(),
+//                            "Error finding that user",
+//                            Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -887,9 +889,9 @@ public class EditDebtActivity extends AppCompatActivity {
                     if (e == null) {
                         // TODO: 16/09/2015 save
                     } else {
-                        Toast.makeText(getApplicationContext(),
-                                "Push not sent: " + e.getMessage(),
-                                Toast.LENGTH_LONG).show();// REMOVE: 15/09/2015
+//                        Toast.makeText(getApplicationContext(),
+//                                "Push not sent: " + e.getMessage(),
+//                                Toast.LENGTH_LONG).show();// REMOVE: 15/09/2015
 
                     }
                 }

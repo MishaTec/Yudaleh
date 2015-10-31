@@ -22,7 +22,6 @@
         android:layout_marginTop="@dimen/com_parse_ui_small_vertical_spacing"
         android:fontFamily="sans-serif"
         android:hint="@string/com_parse_ui_password_input_hint"
-        android:text="123456"
         android:inputType="textPassword"
         android:selectAllOnFocus="true" />
 

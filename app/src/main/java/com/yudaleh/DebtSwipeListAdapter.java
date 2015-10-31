@@ -251,10 +251,10 @@ class DebtSwipeListAdapter extends ArrayAdapter<Debt> {
             String title;
             switch (responseCode) {
                 case RESPONSE_CODE_TOGGLE_RETURNED:
-                    title = debt.getOwnerName() + " marked " + debt.getTitle() + " as " + (debt.isReturned() ? "" : "not ") + "returned";
+                    title = debt.getAuthorName() + " marked " + debt.getTitle() + " as " + (debt.isReturned() ? "" : "not ") + "returned";
                     break;
                 case RESPONSE_CODE_DUE_DATE_CHANGED:
-                    title = debt.getOwnerName() + " changed due date of: " + debt.getTitle();
+                    title = debt.getAuthorName() + " changed due date of: " + debt.getTitle();
                     break;
                 default:
                     return;

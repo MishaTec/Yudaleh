@@ -220,7 +220,7 @@ public class MyPushReceiver extends ParsePushBroadcastReceiver {
                     , PendingIntent.FLAG_UPDATE_CURRENT);
 
             // Create sms action
-            int smsIcon = R.drawable.ic_call_white_24dp;
+            int smsIcon = R.drawable.ic_sms_white_24dp;
             String smsTitle = "SMS " + personName;
             Intent smsIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", personPhone, null));
             PendingIntent notificationSmsIntent = PendingIntent.getActivity(context, 0, smsIntent
