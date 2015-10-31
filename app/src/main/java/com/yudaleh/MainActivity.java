@@ -348,10 +348,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_settings:
-                Intent intent = new Intent(this, SettingsActivity.class);
-                startActivityForResult(intent, SETTINGS_ACTIVITY_CODE);
-                break;
 
             case R.id.action_sync:
                 syncDebtsToParse(SHOW_LOGIN_ON_ERROR);

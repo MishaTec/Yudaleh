@@ -43,11 +43,6 @@
         android:title="@string/action_login">
     </item>
 
-    <item android:id="@+id/action_settings"
-        android:icon="@drawable/ic_settings_white_36dp"
-        android:title="@string/settings"
-        yourapp:showAsAction="never" />
-
     <item
         android:id="@+id/about"
         android:title="@string/about" />

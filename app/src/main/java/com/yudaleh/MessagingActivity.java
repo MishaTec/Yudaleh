@@ -250,31 +250,6 @@ public class MessagingActivity extends Activity {
 
         @Override
         public void onShouldSendPushData(MessageClient client, Message message, List<PushPair> pushPairs) {
-/*            final WritableMessage writableMessage = new WritableMessage(message.getRecipientIds().get(0), message.getTextBody());
-
-            ParseQuery userQuery = ParseUser.getQuery();
-            userQuery.whereEqualTo("objectId", writableMessage.getRecipientIds().get(0));
-
-            ParseQuery pushQuery = ParseInstallation.getQuery();
-            pushQuery.whereMatchesQuery("idutente", userQuery);
-
-            // Send push notification to query
-            ParsePush push = new ParsePush();
-            push.setQuery(pushQuery); // Set our Installation query
-            push.setMessage("sent you a message");
-            push.sendInBackground(new SendCallback() {
-                @Override
-                public void done(ParseException e) {
-
-                    if(e==null){
-
-                    }else{
-                        e.printStackTrace();
-                    }
-
-
-                }
-            });*/
         }
     }
 }

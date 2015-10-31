@@ -108,7 +108,6 @@
     <orderEntry type="library" exported="" name="appcompat-v7-23.0.1" level="project" />
     <orderEntry type="library" exported="" name="support-annotations-23.0.1" level="project" />
     <orderEntry type="module" module-name="ParseLoginUI" exported="" />
-    <orderEntry type="module" module-name="psl" exported="" />
     <orderEntry type="module" module-name="fab" exported="" />
     <orderEntry type="module" module-name="slideDateTimePicker" exported="" />
   </component>
