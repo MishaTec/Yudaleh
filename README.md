@@ -29,7 +29,7 @@ Yudaleh - debt managing application.
 
 ### Project presentation PPT
 
-[presentation link]
+[Presentation link]
 
 ### Personas and Use Cases document
 
@@ -42,6 +42,6 @@ Yudaleh - debt managing application.
 
 
 [Repo link]:https://github.com/michaz13/Yudaleh.git
-[presentation link]:https://docs.google.com/presentation/d/1UhL2zULKkW-iMzWz02AbvQw5ic3h8dFGUkpl7clk1xM/edit?usp=sharing
+[Presentation link]:https://docs.google.com/presentation/d/1UhL2zULKkW-iMzWz02AbvQw5ic3h8dFGUkpl7clk1xM/edit?usp=sharing
 [Personas and use cases link]:https://drive.google.com/file/d/0ByjO2d3s9uDbRTZYb21ua1RMdTQ/view?usp=sharing
 [Flows link]:https://drive.google.com/file/d/0ByjO2d3s9uDbR1VPRTUwU0JZNkU/view?usp=sharing
